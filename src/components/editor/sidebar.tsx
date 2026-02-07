@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 import { ASSET_CATALOG } from '@/lib/assets/asset-catalog';
 import { useEditorStore } from '@/lib/store/editor-store';
 
@@ -33,9 +35,27 @@ export function Sidebar() {
               ].join(' ')}
             >
               <div className="flex items-center justify-between gap-3">
-                <div>
-                  <div className="text-sm font-medium text-zinc-100">{asset.name}</div>
-                  <div className="mt-0.5 text-[11px] text-zinc-400">{asset.category}</div>
+                <div className="flex min-w-0 items-center gap-3">
+                  <div
+                    className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/10 bg-black/30"
+                    aria-hidden="true"
+                  >
+                    <Image
+                      src={asset.thumbnailUrl}
+                      alt=""
+                      width={32}
+                      height={32}
+                      className="h-8 w-8"
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium text-zinc-100">
+                      {asset.name}
+                    </div>
+                    <div className="mt-0.5 text-[11px] text-zinc-400">
+                      {asset.category}
+                    </div>
+                  </div>
                 </div>
                 <div
                   className="h-5 w-5 shrink-0 rounded-full border border-white/15"
@@ -50,4 +70,3 @@ export function Sidebar() {
     </aside>
   );
 }
-

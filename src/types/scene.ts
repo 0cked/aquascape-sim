@@ -10,6 +10,8 @@ export type AssetDefinition = {
   type: string;
   name: string;
   category: AssetCategory;
+  modelUrl: string;
+  thumbnailUrl: string;
   shape: PlaceableShape;
   defaultSize: Vec3;
   color: string;
@@ -22,4 +24,3 @@ export type PlacedObject = {
   rotation: Vec3;
   scale: Vec3;
 };
-

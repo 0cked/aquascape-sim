@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Driftwood">
+  <path
+    d="M14 44c12-6 20-22 36-22 3 0 6 1 8 3l-5 5c-2-1-3-1-5-1-11 0-18 14-28 19-4 2-8 2-12 1l6-5z"
+    fill="#a16207"
+    stroke="#111827"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path d="M46 22l7-6" stroke="#111827" stroke-width="2" stroke-linecap="round" />
+</svg>
+

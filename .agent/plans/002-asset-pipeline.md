@@ -14,7 +14,7 @@ The bootstrap editor proves that lighting, physics, and save/load work, but it u
 - [x] (2026-02-07) Milestone 1: Add Draco + BasisU runtime decoders under `public/` and a reusable glTF loader wrapper for R3F.
 - [x] (2026-02-07) Milestone 2: Add an asset generation pipeline (script) and commit starter Draco-compressed `.glb` assets in `public/models/`.
 - [x] (2026-02-07) Milestone 3: Add a KTX2-compressed substrate texture and render it in the scene (via KTX2Loader in glTF pipeline).
-- [ ] Milestone 4: Wire the editor asset catalog to include `modelUrl` + `thumbnailUrl`, render thumbnails in the sidebar, and spawn glTF models in the scene.
+- [x] (2026-02-07) Milestone 4: Wire the editor asset catalog to include `modelUrl` + `thumbnailUrl`, render thumbnails in the sidebar, and spawn glTF models in the scene.
 - [ ] Milestone 5: Error handling and loading states for asset load failures; validation and deploy.
 
 ## Surprises & Discoveries
@@ -35,6 +35,9 @@ The bootstrap editor proves that lighting, physics, and save/load work, but it u
 - Decision: Treat local KTX-Software binaries as developer machine tooling, and gitignore `scripts/bin/` + `scripts/lib/` rather than committing OS-specific binaries.
   Rationale: Committing platform-specific executables is fragile and noisy; we only need the resulting KTX2-compressed assets at runtime.
   Date/Author: 2026-02-07 / Codex.
+- Decision: Commit lightweight SVG thumbnails under `public/thumbnails/` and render them via `next/image` in the asset sidebar.
+  Rationale: Thumbnails make the editor feel like a real asset browser, and using `next/image` keeps `next lint` clean without introducing remote image hosting.
+  Date/Author: 2026-02-07 / Codex.
 
 ## Outcomes & Retrospective
 
@@ -42,6 +45,7 @@ The bootstrap editor proves that lighting, physics, and save/load work, but it u
 
 - (2026-02-07) Milestone 2 outcome: The repo can generate and regenerate starter Draco-compressed assets via `pnpm assets:generate`, and `public/models/` now contains committed `.glb` models for rocks, plants, wood, and equipment.
 - (2026-02-07) Milestone 3 outcome: The scene substrate uses a glTF model with an embedded KTX2/BasisU texture (`KHR_texture_basisu`), proving the runtime decoders and `KTX2Loader` wiring work end-to-end.
+- (2026-02-07) Milestone 4 outcome: The editor sidebar shows thumbnails for each asset, and placing assets spawns the corresponding glTF models (with physics colliders) instead of primitives.
 
 ---
 
@@ -138,3 +142,4 @@ Plan Revision Notes:
 
 - (2026-02-07) Recorded Milestone 2 completion, and documented the `ktx` tooling requirement for KTX2 texture compression (discovered while implementing the generation pipeline).
 - (2026-02-07) Recorded Milestone 3 completion, including the first committed KTX2-compressed texture used in the running scene.
+- (2026-02-07) Recorded Milestone 4 completion, wiring the catalog + sidebar to thumbnails and swapping placed objects to glTF model rendering.

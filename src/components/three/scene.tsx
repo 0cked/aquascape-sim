@@ -9,7 +9,7 @@ import { Color, NoToneMapping, PCFSoftShadowMap, SRGBColorSpace } from 'three';
 import { AquariumTank } from '@/components/three/aquarium-tank';
 import { Effects } from '@/components/three/effects';
 import { Lighting } from '@/components/three/lighting';
-import { PlaceableObject } from '@/components/three/placeable-object';
+import { PlacedAsset } from '@/components/three/placed-asset';
 import { PlacementHandler } from '@/components/three/placement-handler';
 import { Substrate } from '@/components/three/substrate';
 import { Water } from '@/components/three/water';
@@ -60,20 +60,13 @@ export function Scene() {
           const asset = getAssetDefinition(obj.assetType);
           if (!asset) return null;
 
-          const size: [number, number, number] = [
-            asset.defaultSize[0] * obj.scale[0],
-            asset.defaultSize[1] * obj.scale[1],
-            asset.defaultSize[2] * obj.scale[2],
-          ];
-
           return (
-            <PlaceableObject
+            <PlacedAsset
               key={obj.id}
+              asset={asset}
               position={obj.position}
               rotation={obj.rotation}
-              shape={asset.shape}
-              size={size}
-              color={asset.color}
+              scale={obj.scale}
               selected={obj.id === selectedObjectId}
               onClick={(e) => {
                 e.stopPropagation();
