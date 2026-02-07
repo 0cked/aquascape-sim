@@ -1,4 +1,5 @@
 import { BallCollider, CylinderCollider, CuboidCollider, RigidBody } from '@react-three/rapier';
+import type { ThreeEvent } from '@react-three/fiber';
 import { useMemo } from 'react';
 
 export type PlaceableShape = 'box' | 'sphere' | 'cylinder';
@@ -9,6 +10,8 @@ export type PlaceableObjectProps = {
   shape: PlaceableShape;
   size: [number, number, number];
   color: string;
+  selected?: boolean;
+  onClick?: (e: ThreeEvent<MouseEvent>) => void;
 };
 
 export function PlaceableObject({
@@ -17,37 +20,41 @@ export function PlaceableObject({
   shape,
   size,
   color,
+  selected = false,
+  onClick,
 }: PlaceableObjectProps) {
+  const [sx, sy, sz] = size;
+
   const geometry = useMemo(() => {
     switch (shape) {
       case 'sphere': {
-        const r = size[0] / 2;
+        const r = sx / 2;
         return <sphereGeometry args={[r, 24, 24]} />;
       }
       case 'cylinder': {
-        const r = size[0] / 2;
-        const h = size[1];
+        const r = sx / 2;
+        const h = sy;
         return <cylinderGeometry args={[r, r, h, 28]} />;
       }
       case 'box':
       default:
-        return <boxGeometry args={size} />;
+        return <boxGeometry args={[sx, sy, sz]} />;
     }
-  }, [shape, size]);
+  }, [shape, sx, sy, sz]);
 
   const collider = useMemo(() => {
     switch (shape) {
       case 'sphere': {
-        return <BallCollider args={[size[0] / 2]} />;
+        return <BallCollider args={[sx / 2]} />;
       }
       case 'cylinder': {
-        return <CylinderCollider args={[size[1] / 2, size[0] / 2]} />;
+        return <CylinderCollider args={[sy / 2, sx / 2]} />;
       }
       case 'box':
       default:
-        return <CuboidCollider args={[size[0] / 2, size[1] / 2, size[2] / 2]} />;
+        return <CuboidCollider args={[sx / 2, sy / 2, sz / 2]} />;
     }
-  }, [shape, size]);
+  }, [shape, sx, sy, sz]);
 
   return (
     <RigidBody
@@ -59,11 +66,16 @@ export function PlaceableObject({
       angularDamping={0.8}
     >
       {collider}
-      <mesh castShadow receiveShadow>
+      <mesh castShadow receiveShadow onClick={onClick}>
         {geometry}
-        <meshStandardMaterial color={color} roughness={0.95} metalness={0.02} />
+        <meshStandardMaterial
+          color={color}
+          emissive={selected ? '#ffffff' : '#000000'}
+          emissiveIntensity={selected ? 0.18 : 0}
+          roughness={0.95}
+          metalness={0.02}
+        />
       </mesh>
     </RigidBody>
   );
 }
-

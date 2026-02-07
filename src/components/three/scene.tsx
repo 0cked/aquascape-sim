@@ -10,11 +10,18 @@ import { AquariumTank } from '@/components/three/aquarium-tank';
 import { Effects } from '@/components/three/effects';
 import { Lighting } from '@/components/three/lighting';
 import { PlaceableObject } from '@/components/three/placeable-object';
+import { PlacementHandler } from '@/components/three/placement-handler';
 import { Substrate } from '@/components/three/substrate';
 import { Water } from '@/components/three/water';
+import { getAssetDefinition } from '@/lib/assets/asset-catalog';
+import { useEditorStore } from '@/lib/store/editor-store';
 
 export function Scene() {
   const background = useMemo(() => new Color('#05070a'), []);
+  const mode = useEditorStore((s) => s.mode);
+  const objects = useEditorStore((s) => s.objects);
+  const selectedObjectId = useEditorStore((s) => s.selectedObjectId);
+  const selectObject = useEditorStore((s) => s.selectObject);
 
   return (
     <Canvas
@@ -47,32 +54,35 @@ export function Scene() {
       <Physics gravity={[0, -4.9, 0]} debug={false}>
         <AquariumTank />
         <Substrate />
+        <PlacementHandler />
 
-        {/* Temporary test objects; editor placement replaces these in Milestone 5. */}
-        <PlaceableObject
-          position={[-0.9, 3.2, 0.1]}
-          shape="box"
-          size={[0.7, 0.45, 0.7]}
-          color="#6b7280"
-        />
-        <PlaceableObject
-          position={[0.2, 3.5, -0.4]}
-          shape="sphere"
-          size={[0.55, 0.55, 0.55]}
-          color="#4b5563"
-        />
-        <PlaceableObject
-          position={[0.8, 3.0, 0.4]}
-          shape="cylinder"
-          size={[0.45, 0.85, 0.45]}
-          color="#7c3aed"
-        />
-        <PlaceableObject
-          position={[0.0, 3.7, 0.0]}
-          shape="box"
-          size={[0.85, 0.55, 0.5]}
-          color="#9ca3af"
-        />
+        {objects.map((obj) => {
+          const asset = getAssetDefinition(obj.assetType);
+          if (!asset) return null;
+
+          const size: [number, number, number] = [
+            asset.defaultSize[0] * obj.scale[0],
+            asset.defaultSize[1] * obj.scale[1],
+            asset.defaultSize[2] * obj.scale[2],
+          ];
+
+          return (
+            <PlaceableObject
+              key={obj.id}
+              position={obj.position}
+              rotation={obj.rotation}
+              shape={asset.shape}
+              size={size}
+              color={asset.color}
+              selected={obj.id === selectedObjectId}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (mode === 'place') return;
+                selectObject(obj.id);
+              }}
+            />
+          );
+        })}
       </Physics>
       <Water />
 
