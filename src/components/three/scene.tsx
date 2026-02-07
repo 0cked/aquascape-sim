@@ -1,6 +1,6 @@
 'use client';
 
-import { OrbitControls, PerformanceMonitor, TransformControls } from '@react-three/drei';
+import { Html, OrbitControls, PerformanceMonitor, TransformControls } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import { Physics } from '@react-three/rapier';
 import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -154,6 +154,28 @@ export function Scene() {
 
   const transformBeforeRef = useRef<TransformSnapshot | null>(null);
   const sunRef = useRef<import('three').Mesh>(null!);
+  const [canvasEl, setCanvasEl] = useState<HTMLCanvasElement | null>(null);
+  const [contextLost, setContextLost] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!canvasEl) return;
+
+    const onLost = (e: Event) => {
+      // Prevent the default browser behavior which can make restoration unpredictable.
+      if ('preventDefault' in e) (e as Event).preventDefault();
+      setContextLost(true);
+    };
+    const onRestored = () => {
+      setContextLost(false);
+    };
+
+    canvasEl.addEventListener('webglcontextlost', onLost, { passive: false } as AddEventListenerOptions);
+    canvasEl.addEventListener('webglcontextrestored', onRestored);
+    return () => {
+      canvasEl.removeEventListener('webglcontextlost', onLost);
+      canvasEl.removeEventListener('webglcontextrestored', onRestored);
+    };
+  }, [canvasEl]);
 
   return (
     <Canvas
@@ -174,8 +196,41 @@ export function Scene() {
         gl.outputColorSpace = SRGBColorSpace;
 
         scene.background = background;
+
+        // Used for WebGL context loss handling.
+        setCanvasEl(gl.domElement);
       }}
     >
+      {contextLost ? (
+        <Html fullscreen>
+          <div className="pointer-events-auto absolute inset-0 flex items-center justify-center bg-black/80 p-6 text-zinc-100">
+            <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-black/70 p-6 shadow-[0_40px_140px_rgba(0,0,0,0.85)] backdrop-blur">
+              <div className="text-base font-semibold">WebGL Context Lost</div>
+              <div className="mt-2 text-sm leading-6 text-zinc-300">
+                Your browser lost the GPU rendering context. This can happen after a driver reset or when the tab is
+                backgrounded under memory pressure. Reloading usually fixes it.
+              </div>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="h-10 rounded-full bg-white px-5 text-sm font-medium text-black transition hover:bg-zinc-200"
+                >
+                  Reload
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setContextLost(false)}
+                  className="h-10 rounded-full border border-white/10 bg-white/5 px-5 text-sm text-zinc-100 transition hover:border-white/20 hover:bg-white/10"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+        </Html>
+      ) : null}
+
       <PerformanceMonitor
         onDecline={() => {
           if (!autoDegradeEnabled) return;

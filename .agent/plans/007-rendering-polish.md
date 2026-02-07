@@ -24,7 +24,7 @@ After this phase, users should see obvious quality improvements on High quality,
 - [x] (2026-02-07) Milestone 2: Underwater haze (toggleable scene fog with tuned colors/density).
 - [x] (2026-02-07) Milestone 3: Caustics (toggleable caustics projection near the substrate).
 - [x] (2026-02-07) Milestone 4: Optional light shafts (God rays) integrated into post-processing on High.
-- [ ] (2026-02-07) Milestone 5: WebGL context loss handling + full validation + deploy.
+- [x] (2026-02-07) Milestone 5: WebGL context loss handling + full validation + deploy.
 
 ## Surprises & Discoveries
 
@@ -46,6 +46,9 @@ After this phase, users should see obvious quality improvements on High quality,
 - Decision: Implement light shafts using `GodRays` in post-processing, driven by an invisible “sun” mesh near the key directional light.
   Rationale: This yields a recognizable volumetric look with minimal scene complexity and remains easy to disable via quality settings/presets.
   Date/Author: 2026-02-07 / Codex.
+- Decision: Handle WebGL context loss by listening on the canvas element and rendering a fullscreen `Html` overlay with reload guidance.
+  Rationale: Context loss is a common real-world failure mode; surfacing a clear recovery path is better than a silent black canvas.
+  Date/Author: 2026-02-07 / Codex.
 
 ## Outcomes & Retrospective
 
@@ -55,6 +58,9 @@ After this phase, users should see obvious quality improvements on High quality,
 (2026-02-07) Milestone 2 outcome: The scene now supports an “Underwater fog” toggle (wired through quality settings) that adds haze/depth cues using `fogExp2`.
 (2026-02-07) Milestone 3 outcome: The scene now supports a toggleable caustics layer (`src/components/three/caustics-plane.tsx`) that projects animated highlights near the substrate on High quality.
 (2026-02-07) Milestone 4 outcome: Post-processing can now optionally render subtle light shafts via `GodRays` when enabled, using an invisible sun proxy mesh in the scene.
+(2026-02-07) Milestone 5 outcome: The editor now detects WebGL context loss/restoration events and shows a clear fullscreen overlay. Full validation passed: `pnpm type-check && pnpm lint && pnpm test && pnpm build`.
+
+(2026-02-07) Plan retrospective: Visual polish now scales with quality settings (water detail, fog, caustics, light shafts). The editor also fails more gracefully under GPU instability. Remaining polish work should focus on better tank glass dispersion, more physically based water volume cues, and per-device tuning defaults.
 ## Context and Orientation
 
 Current relevant files:
@@ -183,4 +189,4 @@ Automated:
 
 Plan Revision Note (2026-02-07):
 
-Updated the living sections to record Milestone 4 completion after integrating optional `GodRays` light shafts into post-processing and wiring the toggle through quality settings.
+Updated the living sections to record Milestone 5 completion after adding WebGL context loss handling and validating production builds.
