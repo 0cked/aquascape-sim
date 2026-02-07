@@ -151,6 +151,8 @@ AquascapeSim is a browser-based 3D aquarium aquascaping simulator. After this bo
 
 - Milestone 7 (2026-02-07): Landing page is polished, editor has loading and crash fallbacks, unit tests + Vitest config are in place, and GitHub Actions CI runs type-check/lint/test on PRs. Production deploy remains `https://aquascape-sim.vercel.app`.
 
+Overall (2026-02-07): Bootstrap acceptance is met: a user can reach the landing page, launch the editor, orbit/pan/zoom, place placeholder assets via a UI workflow with collisions and settling, authenticate with Supabase, and save/load builds backed by Postgres. The main gaps intentionally left for post-bootstrap milestones are: real glTF asset pipeline (Draco/KTX2), transform gizmos/properties panel, thumbnails/sharing, and undo/redo.
+
 ---
 
 ## Context and Orientation
