@@ -1,16 +1,24 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
+import { UserMenu } from '@/components/auth/user-menu';
+import { LoadDialog } from '@/components/editor/load-dialog';
+import { SaveDialog } from '@/components/editor/save-dialog';
 import { getAssetDefinition } from '@/lib/assets/asset-catalog';
 import { useEditorStore } from '@/lib/store/editor-store';
+import { useAuthUser } from '@/lib/supabase/use-auth-user';
 
 export function Toolbar() {
+  const { user, loading: authLoading } = useAuthUser();
   const mode = useEditorStore((s) => s.mode);
   const selectedAssetType = useEditorStore((s) => s.selectedAssetType);
   const selectedObjectId = useEditorStore((s) => s.selectedObjectId);
   const setMode = useEditorStore((s) => s.setMode);
   const removeObject = useEditorStore((s) => s.removeObject);
+
+  const [saveOpen, setSaveOpen] = useState<boolean>(false);
+  const [loadOpen, setLoadOpen] = useState<boolean>(false);
 
   const modeLabel = useMemo(() => {
     if (mode !== 'place' || !selectedAssetType) return 'Select';
@@ -42,6 +50,9 @@ export function Toolbar() {
 
   return (
     <header className="absolute left-4 right-4 top-4 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/40 px-4 py-3 shadow-[0_24px_80px_rgba(0,0,0,0.55)] backdrop-blur">
+      <SaveDialog open={saveOpen} onClose={() => setSaveOpen(false)} />
+      <LoadDialog open={loadOpen} onClose={() => setLoadOpen(false)} />
+
       <div className="flex items-center gap-3">
         <div className="text-sm font-medium text-zinc-100">AquascapeSim</div>
         <div className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-zinc-300">
@@ -50,6 +61,22 @@ export function Toolbar() {
       </div>
 
       <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setLoadOpen(true)}
+          disabled={authLoading || !user}
+          className="h-9 rounded-full border border-white/10 bg-white/5 px-4 text-sm text-zinc-100 transition enabled:hover:border-white/20 enabled:hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Load
+        </button>
+        <button
+          type="button"
+          onClick={() => setSaveOpen(true)}
+          disabled={authLoading || !user}
+          className="h-9 rounded-full border border-white/10 bg-white/5 px-4 text-sm text-zinc-100 transition enabled:hover:border-white/20 enabled:hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Save
+        </button>
         <button
           type="button"
           onClick={() => setMode('select')}
@@ -67,8 +94,10 @@ export function Toolbar() {
         >
           Delete
         </button>
+        <div className="ml-2">
+          <UserMenu />
+        </div>
       </div>
     </header>
   );
 }
-
