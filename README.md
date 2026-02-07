@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AquascapeSim
 
-## Getting Started
+Browser-based 3D aquarium aquascaping editor: place placeholder rocks/wood/plants in a glass tank with lighting, post-processing, and physics-based collisions. Builds can be saved and loaded via Supabase.
 
-First, run the development server:
+Live demo: https://aquascape-sim.vercel.app
+
+## Tech Stack
+
+- Next.js 15 (App Router) + TypeScript (strict)
+- Three.js via React Three Fiber + Drei
+- Rapier physics via `@react-three/rapier`
+- Post-processing via `@react-three/postprocessing`
+- Zustand state
+- Tailwind CSS 4
+- Supabase (Auth + Postgres)
+
+## Local Development
+
+Prereqs:
+
+- Node 22+
+- pnpm
+- Supabase project creds in `.secrets/` (see `AGENTS.md`)
+
+Commands:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm type-check
+pnpm lint
+pnpm test
+pnpm build
+```
 
-## Learn More
+## Supabase Schema
 
-To learn more about Next.js, take a look at the following resources:
+Migrations live in `supabase/migrations/`. The bootstrap schema creates:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `profiles`
+- `builds` (includes `scene_data` JSONB)
+- `asset_catalog`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Row Level Security (RLS) is enabled.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

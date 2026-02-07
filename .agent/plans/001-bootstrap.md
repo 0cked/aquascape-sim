@@ -18,7 +18,7 @@ AquascapeSim is a browser-based 3D aquarium aquascaping simulator. After this bo
 - [x] (2026-02-07) Milestone 4: Physics integration — Rapier, gravity, collisions, surface placement
 - [x] (2026-02-07) Milestone 5: Editor UI — toolbar, sidebar, object placement workflow
 - [x] (2026-02-07) Milestone 6: Supabase integration — auth, database schema, save/load builds
-- [ ] Milestone 7: Polish, testing, and final deploy
+- [x] (2026-02-07) Milestone 7: Polish, testing, and final deploy
 
 ## Surprises & Discoveries
 
@@ -48,6 +48,9 @@ AquascapeSim is a browser-based 3D aquarium aquascaping simulator. After this bo
 
 - Observation: In Next.js v15.5.x, `cookies()` is async (returns a Promise), so server Supabase client helpers must be async as well.
   Evidence: `Property 'getAll' does not exist on type 'Promise<ReadonlyRequestCookies>'.`
+
+- Observation: Dynamically importing the heavy 3D editor scene significantly reduced the `/editor` route's initial JS payload.
+  Evidence: `Route (app) /editor Size 64.3 kB First Load JS 166 kB` after introducing a dynamic `SceneShell`.
 
 ## Decision Log
 
@@ -99,6 +102,14 @@ AquascapeSim is a browser-based 3D aquarium aquascaping simulator. After this bo
   Rationale: Keeps bootstrap serialization simple and self-contained; can be migrated to structured JSON objects later without changing the DB schema.
   Date/Author: 2026-02-07 / Codex.
 
+- Decision: Wrap the editor scene in a client-side `SceneShell` with dynamic import and an error boundary.
+  Rationale: Improves perceived performance (loading UI while bundles download) and provides a friendly fallback if WebGL/Three throws during render.
+  Date/Author: 2026-02-07 / Codex.
+
+- Decision: Add a minimal Vitest suite for editor state and serialization.
+  Rationale: Locks in core behaviors needed for save/load and future refactors, without needing browser/E2E infra at bootstrap time.
+  Date/Author: 2026-02-07 / Codex.
+
 - Decision: Use `@react-three/rapier` instead of raw Rapier bindings.
   Rationale: It integrates natively with R3F's scene graph and handles the WASM init lifecycle. Less boilerplate, fewer bugs.
   Date/Author: Plan creation.
@@ -137,6 +148,8 @@ AquascapeSim is a browser-based 3D aquarium aquascaping simulator. After this bo
 - Milestone 5 (2026-02-07): The editor has a working UI overlay (toolbar + sidebar). Users can pick an asset, click the substrate to place it (physics-driven settling/collisions), select objects by clicking them, and delete via the toolbar button or `Delete`/`Backspace`.
 
 - Milestone 6 (2026-02-07): Users can sign up / sign in with Supabase Auth. Signed-in users can save builds (scene serialized from the editor store to `builds.scene_data`) and load saved builds back into the editor.
+
+- Milestone 7 (2026-02-07): Landing page is polished, editor has loading and crash fallbacks, unit tests + Vitest config are in place, and GitHub Actions CI runs type-check/lint/test on PRs. Production deploy remains `https://aquascape-sim.vercel.app`.
 
 ---
 
@@ -621,6 +634,8 @@ If `pnpm install` fails, delete `node_modules/` and `pnpm-lock.yaml` and try aga
 2026-02-07: Marked Milestone 5 complete; recorded placement/undo decisions.
 
 2026-02-07: Marked Milestone 6 complete; recorded Supabase CLI auth surprise, Next.js cookies async behavior, and the migration/serialization decisions.
+
+2026-02-07: Marked Milestone 7 complete; recorded dynamic scene shell decision and added test/CI/polish artifacts.
 
 If Supabase migration fails, check the SQL syntax, fix it, and re-run `npx supabase db push`. Migrations are idempotent if written with `CREATE TABLE IF NOT EXISTS` and `CREATE OR REPLACE FUNCTION`.
 

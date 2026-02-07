@@ -9,6 +9,7 @@ export type EditorStore = {
   objects: PlacedObject[];
   selectedObjectId: string | null;
 
+  reset: () => void;
   setMode: (mode: EditorMode) => void;
   selectAsset: (assetType: string) => void;
 
@@ -27,6 +28,15 @@ export const useEditorStore = create<EditorStore>()(
     selectedAssetType: null,
     objects: [],
     selectedObjectId: null,
+
+    reset: () => {
+      set((s) => {
+        s.mode = 'select';
+        s.selectedAssetType = null;
+        s.objects = [];
+        s.selectedObjectId = null;
+      });
+    },
 
     setMode: (mode) => {
       set((s) => {
