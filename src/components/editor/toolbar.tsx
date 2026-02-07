@@ -127,9 +127,7 @@ export function Toolbar() {
           Redo
         </button>
 
-        <div className="hidden sm:block">
-          <QualityMenu />
-        </div>
+        <QualityMenu />
 
         <div className="hidden items-center rounded-full border border-white/10 bg-white/5 p-1 sm:flex">
           <button

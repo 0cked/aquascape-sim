@@ -1,6 +1,6 @@
 'use client';
 
-import { OrbitControls, TransformControls } from '@react-three/drei';
+import { OrbitControls, PerformanceMonitor, TransformControls } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import { Physics } from '@react-three/rapier';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -43,11 +43,16 @@ function halfExtents(shape: PlaceableShape, size: Vec3): Vec3 {
 
 export function Scene() {
   const background = useMemo(() => new Color('#05070a'), []);
+  const preset = useQualityStore((s) => s.preset);
   const dprMax = useQualityStore((s) => s.dprMax);
   const shadowsEnabled = useQualityStore((s) => s.shadowsEnabled);
   const shadowMapSize = useQualityStore((s) => s.shadowMapSize);
   const postprocessingEnabled = useQualityStore((s) => s.postprocessingEnabled);
   const aoQuality = useQualityStore((s) => s.aoQuality);
+  const autoDegradeEnabled = useQualityStore((s) => s.autoDegradeEnabled);
+  const setAutoDegradeEnabled = useQualityStore((s) => s.setAutoDegradeEnabled);
+  const setAutoNotice = useQualityStore((s) => s.setAutoNotice);
+  const setPreset = useQualityStore((s) => s.setPreset);
   const mode = useEditorStore((s) => s.mode);
   const objects = useEditorStore((s) => s.objects);
   const selectedObjectIds = useEditorStore((s) => s.selectedObjectIds);
@@ -160,6 +165,18 @@ export function Scene() {
         scene.background = background;
       }}
     >
+      <PerformanceMonitor
+        onDecline={() => {
+          if (!autoDegradeEnabled) return;
+
+          const next = preset === 'high' ? 'medium' : preset === 'medium' ? 'low' : null;
+          if (!next) return;
+
+          setPreset(next);
+          setAutoDegradeEnabled(false);
+          setAutoNotice(`Auto lowered quality to ${next} to keep interaction responsive.`);
+        }}
+      />
       <Lighting shadowsEnabled={shadowsEnabled} shadowMapSize={shadowMapSize} />
 
       {/* Stand / stage */}

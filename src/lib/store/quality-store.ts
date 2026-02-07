@@ -11,8 +11,12 @@ export type QualityState = {
   shadowMapSize: number;
   postprocessingEnabled: boolean;
   aoQuality: AoQuality;
+  autoDegradeEnabled: boolean;
+  autoNotice: string | null;
 
   setPreset: (preset: QualityPreset) => void;
+  setAutoDegradeEnabled: (enabled: boolean) => void;
+  setAutoNotice: (message: string | null) => void;
 };
 
 type PresetConfig = Pick<
@@ -52,8 +56,16 @@ export const useQualityStore = create<QualityState>()(
   persist(
     (set) => ({
       ...applyPreset('high'),
+      autoDegradeEnabled: true,
+      autoNotice: null,
       setPreset: (preset) => {
-        set(applyPreset(preset));
+        set((s) => ({ ...s, ...applyPreset(preset), autoNotice: null }));
+      },
+      setAutoDegradeEnabled: (enabled) => {
+        set((s) => ({ ...s, autoDegradeEnabled: enabled }));
+      },
+      setAutoNotice: (message) => {
+        set((s) => ({ ...s, autoNotice: message }));
       },
     }),
     {

@@ -13,6 +13,8 @@ const PRESET_LABEL: Record<QualityPreset, string> = {
 export function QualityMenu() {
   const preset = useQualityStore((s) => s.preset);
   const setPreset = useQualityStore((s) => s.setPreset);
+  const autoDegradeEnabled = useQualityStore((s) => s.autoDegradeEnabled);
+  const setAutoDegradeEnabled = useQualityStore((s) => s.setAutoDegradeEnabled);
 
   const [open, setOpen] = useState<boolean>(false);
 
@@ -34,7 +36,8 @@ export function QualityMenu() {
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        Quality: {PRESET_LABEL[preset]}
+        <span className="hidden sm:inline">Quality: {PRESET_LABEL[preset]}</span>
+        <span className="sm:hidden">Q: {PRESET_LABEL[preset]}</span>
       </button>
 
       {open ? (
@@ -72,9 +75,23 @@ export function QualityMenu() {
               );
             })}
           </div>
+
+          <div className="border-t border-white/10 px-4 py-3">
+            <label className="flex cursor-pointer items-center justify-between gap-3 text-xs text-zinc-200">
+              <span>Auto-degrade on low FPS</span>
+              <input
+                type="checkbox"
+                checked={autoDegradeEnabled}
+                onChange={(e) => setAutoDegradeEnabled(e.target.checked)}
+                className="h-4 w-4 rounded border-white/20 bg-black/30"
+              />
+            </label>
+            <div className="mt-1 text-[11px] text-zinc-400">
+              When enabled, AquascapeSim may lower quality to keep interaction responsive.
+            </div>
+          </div>
         </div>
       ) : null}
     </div>
   );
 }
-

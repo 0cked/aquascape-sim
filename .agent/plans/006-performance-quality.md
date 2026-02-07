@@ -14,7 +14,7 @@ This phase adds practical performance controls and guardrails. After this phase,
 ## Progress
 
 - [x] (2026-02-07) Milestone 1: Quality store + UI menu with presets that affect DPR, shadows, and post-processing.
-- [ ] (2026-02-07) Milestone 2: Adaptive performance fallback (auto-degrade on sustained low FPS; user can override).
+- [x] (2026-02-07) Milestone 2: Adaptive performance fallback (auto-degrade on sustained low FPS; user can override).
 - [ ] (2026-02-07) Milestone 3: Rendering optimizations for repeated assets (reduce cloning; add instanced static rendering where safe).
 - [ ] (2026-02-07) Milestone 4: Physics tuning (fixed bodies for settled objects; safer collider/body updates during transforms).
 - [ ] (2026-02-07) Milestone 5: Regression guardrails (bundle size check script + CI `pnpm build` + documented thresholds).
@@ -33,12 +33,16 @@ This phase adds practical performance controls and guardrails. After this phase,
 - Decision: Wire quality into rendering via explicit props for `Lighting` and `Effects`, and via `<Canvas dpr/shadows>` in `src/components/three/scene.tsx`.
   Rationale: Keeping `Lighting` and `Effects` as mostly “pure” components avoids accidental server/client boundary issues and makes behavior easy to audit.
   Date/Author: 2026-02-07 / Codex.
+- Decision: Make auto-degrade “one-shot” by disabling auto-degrade after it triggers, and expose a toggle to re-enable it.
+  Rationale: This avoids fighting user intent (repeatedly downgrading after manual changes) while still giving a safety valve for runaway scenes.
+  Date/Author: 2026-02-07 / Codex.
 
 ## Outcomes & Retrospective
 
 (To be updated at milestone completions.)
 
 (2026-02-07) Milestone 1 outcome: The editor toolbar now includes a “Quality” menu that switches between Low/Medium/High presets, controlling Canvas DPR, shadow enablement, and post-processing (including AO tiers).
+(2026-02-07) Milestone 2 outcome: The scene now uses Drei `PerformanceMonitor` to auto-lower quality on sustained performance decline, shows a dismissible on-screen notice, and disables further auto-degrades until the user re-enables the toggle.
 
 ## Context and Orientation
 
@@ -174,4 +178,4 @@ Automated validation:
 
 Plan Revision Note (2026-02-07):
 
-Updated the living sections to record Milestone 1 completion after adding the quality preset store, toolbar menu, and wiring DPR/shadows/post-processing to the renderer.
+Updated the living sections to record Milestone 2 completion after adding auto-degrade via `PerformanceMonitor`, a banner notice, and an explicit toggle to re-enable auto adjustments.
