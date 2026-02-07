@@ -13,6 +13,12 @@ const PRESET_LABEL: Record<QualityPreset, string> = {
 export function QualityMenu() {
   const preset = useQualityStore((s) => s.preset);
   const setPreset = useQualityStore((s) => s.setPreset);
+  const fogEnabled = useQualityStore((s) => s.fogEnabled);
+  const causticsEnabled = useQualityStore((s) => s.causticsEnabled);
+  const godRaysEnabled = useQualityStore((s) => s.godRaysEnabled);
+  const setFogEnabled = useQualityStore((s) => s.setFogEnabled);
+  const setCausticsEnabled = useQualityStore((s) => s.setCausticsEnabled);
+  const setGodRaysEnabled = useQualityStore((s) => s.setGodRaysEnabled);
   const autoDegradeEnabled = useQualityStore((s) => s.autoDegradeEnabled);
   const setAutoDegradeEnabled = useQualityStore((s) => s.setAutoDegradeEnabled);
 
@@ -74,6 +80,41 @@ export function QualityMenu() {
                 </button>
               );
             })}
+          </div>
+
+          <div className="border-t border-white/10 px-4 py-3">
+            <div className="text-[11px] font-medium text-zinc-200">Atmosphere</div>
+            <div className="mt-2 space-y-2">
+              <label className="flex cursor-pointer items-center justify-between gap-3 text-xs text-zinc-200">
+                <span>Underwater fog</span>
+                <input
+                  type="checkbox"
+                  checked={fogEnabled}
+                  onChange={(e) => setFogEnabled(e.target.checked)}
+                  className="h-4 w-4 rounded border-white/20 bg-black/30"
+                />
+              </label>
+
+              <label className="flex cursor-pointer items-center justify-between gap-3 text-xs text-zinc-200">
+                <span>Caustics</span>
+                <input
+                  type="checkbox"
+                  checked={causticsEnabled}
+                  onChange={(e) => setCausticsEnabled(e.target.checked)}
+                  className="h-4 w-4 rounded border-white/20 bg-black/30"
+                />
+              </label>
+
+              <label className="flex cursor-pointer items-center justify-between gap-3 text-xs text-zinc-200">
+                <span>Light shafts</span>
+                <input
+                  type="checkbox"
+                  checked={godRaysEnabled}
+                  onChange={(e) => setGodRaysEnabled(e.target.checked)}
+                  className="h-4 w-4 rounded border-white/20 bg-black/30"
+                />
+              </label>
+            </div>
           </div>
 
           <div className="border-t border-white/10 px-4 py-3">

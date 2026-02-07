@@ -50,6 +50,7 @@ export function Scene() {
   const shadowMapSize = useQualityStore((s) => s.shadowMapSize);
   const postprocessingEnabled = useQualityStore((s) => s.postprocessingEnabled);
   const aoQuality = useQualityStore((s) => s.aoQuality);
+  const fogEnabled = useQualityStore((s) => s.fogEnabled);
   const autoDegradeEnabled = useQualityStore((s) => s.autoDegradeEnabled);
   const setAutoDegradeEnabled = useQualityStore((s) => s.setAutoDegradeEnabled);
   const setAutoNotice = useQualityStore((s) => s.setAutoNotice);
@@ -184,6 +185,7 @@ export function Scene() {
         }}
       />
       <Lighting shadowsEnabled={shadowsEnabled} shadowMapSize={shadowMapSize} />
+      {fogEnabled ? <fogExp2 attach="fog" args={['#07222c', 0.075]} /> : null}
 
       {/* Stand / stage */}
       <mesh position={[0, -0.55, 0]} castShadow receiveShadow>

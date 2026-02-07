@@ -11,10 +11,16 @@ export type QualityState = {
   shadowMapSize: number;
   postprocessingEnabled: boolean;
   aoQuality: AoQuality;
+  fogEnabled: boolean;
+  causticsEnabled: boolean;
+  godRaysEnabled: boolean;
   autoDegradeEnabled: boolean;
   autoNotice: string | null;
 
   setPreset: (preset: QualityPreset) => void;
+  setFogEnabled: (enabled: boolean) => void;
+  setCausticsEnabled: (enabled: boolean) => void;
+  setGodRaysEnabled: (enabled: boolean) => void;
   setAutoDegradeEnabled: (enabled: boolean) => void;
   setAutoNotice: (message: string | null) => void;
 };
@@ -22,6 +28,9 @@ export type QualityState = {
 type PresetConfig = Pick<
   QualityState,
   'preset' | 'dprMax' | 'shadowsEnabled' | 'shadowMapSize' | 'postprocessingEnabled' | 'aoQuality'
+  | 'fogEnabled'
+  | 'causticsEnabled'
+  | 'godRaysEnabled'
 >;
 
 const PRESETS: Record<QualityPreset, Omit<PresetConfig, 'preset'>> = {
@@ -31,6 +40,9 @@ const PRESETS: Record<QualityPreset, Omit<PresetConfig, 'preset'>> = {
     shadowMapSize: 0,
     postprocessingEnabled: false,
     aoQuality: 'off',
+    fogEnabled: false,
+    causticsEnabled: false,
+    godRaysEnabled: false,
   },
   medium: {
     dprMax: 1.5,
@@ -38,6 +50,9 @@ const PRESETS: Record<QualityPreset, Omit<PresetConfig, 'preset'>> = {
     shadowMapSize: 1024,
     postprocessingEnabled: true,
     aoQuality: 'low',
+    fogEnabled: true,
+    causticsEnabled: false,
+    godRaysEnabled: false,
   },
   high: {
     dprMax: 1.75,
@@ -45,6 +60,9 @@ const PRESETS: Record<QualityPreset, Omit<PresetConfig, 'preset'>> = {
     shadowMapSize: 2048,
     postprocessingEnabled: true,
     aoQuality: 'high',
+    fogEnabled: true,
+    causticsEnabled: true,
+    godRaysEnabled: true,
   },
 };
 
@@ -60,6 +78,15 @@ export const useQualityStore = create<QualityState>()(
       autoNotice: null,
       setPreset: (preset) => {
         set((s) => ({ ...s, ...applyPreset(preset), autoNotice: null }));
+      },
+      setFogEnabled: (enabled) => {
+        set((s) => ({ ...s, fogEnabled: enabled }));
+      },
+      setCausticsEnabled: (enabled) => {
+        set((s) => ({ ...s, causticsEnabled: enabled }));
+      },
+      setGodRaysEnabled: (enabled) => {
+        set((s) => ({ ...s, godRaysEnabled: enabled }));
       },
       setAutoDegradeEnabled: (enabled) => {
         set((s) => ({ ...s, autoDegradeEnabled: enabled }));
