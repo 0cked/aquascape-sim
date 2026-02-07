@@ -135,6 +135,7 @@ export function Scene() {
 
   return (
     <Canvas
+      id="aquascape-canvas"
       shadows
       dpr={[1, 1.75]}
       camera={{ position: [9, 6.5, 9], fov: 42, near: 0.1, far: 200 }}
@@ -142,6 +143,7 @@ export function Scene() {
         antialias: true,
         alpha: false,
         powerPreference: 'high-performance',
+        preserveDrawingBuffer: true,
       }}
       onCreated={({ gl, scene }) => {
         gl.shadowMap.enabled = true;

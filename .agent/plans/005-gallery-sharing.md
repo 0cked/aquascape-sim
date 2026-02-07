@@ -12,14 +12,15 @@ Saving builds is useful, but without thumbnails and sharing, it is hard to brows
 ## Progress
 
 - [x] (2026-02-07) Milestone 1: Database schema for likes and public gallery queries (migrations + RLS).
-- [ ] (2026-02-07) Milestone 2: Thumbnail capture on save and upload to Supabase Storage via a server route.
+- [x] (2026-02-07) Milestone 2: Thumbnail capture on save and upload to Supabase Storage via a server route.
 - [ ] (2026-02-07) Milestone 3: `/gallery` page listing public builds with thumbnails and pagination.
 - [ ] (2026-02-07) Milestone 4: Share/open flow: `/editor?build=<id>` loads builds (public or owned) and clears undo history.
 - [ ] (2026-02-07) Milestone 5: Likes UI + validation + deploy.
 
 ## Surprises & Discoveries
 
-(To be updated as surprises occur.)
+- Observation: Capturing a WebGL canvas thumbnail reliably required `preserveDrawingBuffer: true` on the R3F canvas, and full-size captures can be unexpectedly large on high-DPI screens.
+  Evidence: Without `preserveDrawingBuffer`, `canvas.toBlob(...)` can produce empty/blank output depending on browser/GPU. Full-size captures at editor DPR produced multi-megabyte images before downscaling.
 
 ## Decision Log
 
@@ -28,18 +29,25 @@ Saving builds is useful, but without thumbnails and sharing, it is hard to brows
 - Decision: Add `public.build_likes` with a composite primary key `(build_id, user_id)` and RLS limited to public builds for reads, and authenticated self for writes.
   Rationale: Prevents duplicate likes at the database level and keeps policies simple for the first public gallery.
   Date/Author: 2026-02-07 / Codex.
+- Decision: Save the build row first (selecting the new `id`), then upload a best-effort thumbnail and update `thumbnail_url`.
+  Rationale: The thumbnail path uses the `buildId`, and making thumbnail upload non-fatal avoids “saved but error” states that would encourage duplicate saves.
+  Date/Author: 2026-02-07 / Codex.
+- Decision: Downscale thumbnails client-side to a small WebP (max 640px) before upload.
+  Rationale: Keeps storage and bandwidth small and makes `/gallery` load quickly, without needing server-side image processing for the MVP.
+  Date/Author: 2026-02-07 / Codex.
 
 ## Outcomes & Retrospective
 
 (To be updated at milestone completions.)
 
 - (2026-02-07) Milestone 1 outcome: Supabase migration `002_build_likes.sql` adds `build_likes` with RLS policies suitable for a public gallery like count and authenticated like/unlike.
+- (2026-02-07) Milestone 2 outcome: Saving a build captures a downscaled WebP thumbnail from the 3D canvas and uploads it via `POST /api/thumbnails`, storing the resulting `thumbnail_url` on the build record.
 
 ---
 
 Plan Revision Note (2026-02-07):
 
-Updated the living sections to record Milestone 1 completion after pushing the `build_likes` migration and policies.
+Updated the living sections to record Milestone 2 completion (thumbnail capture + upload route), including decisions around best-effort thumbnail uploads and client-side downscaling.
 
 ---
 

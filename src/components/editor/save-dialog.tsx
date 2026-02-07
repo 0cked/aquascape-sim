@@ -13,6 +13,30 @@ export type SaveDialogProps = {
   onClose: () => void;
 };
 
+async function canvasToWebpBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
+  // Downscale the capture to keep thumbnail size small and uploads fast.
+  const maxDim = 640;
+  const srcW = canvas.width;
+  const srcH = canvas.height;
+
+  if (!srcW || !srcH) return null;
+
+  const scale = Math.min(1, maxDim / Math.max(srcW, srcH));
+  const dstW = Math.max(1, Math.round(srcW * scale));
+  const dstH = Math.max(1, Math.round(srcH * scale));
+
+  const tmp = document.createElement('canvas');
+  tmp.width = dstW;
+  tmp.height = dstH;
+  const ctx = tmp.getContext('2d');
+  if (!ctx) return null;
+
+  ctx.drawImage(canvas, 0, 0, dstW, dstH);
+  return await new Promise<Blob | null>((resolve) => {
+    tmp.toBlob(resolve, 'image/webp', 0.78);
+  });
+}
+
 export function SaveDialog({ open, onClose }: SaveDialogProps) {
   const router = useRouter();
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
@@ -40,14 +64,54 @@ export function SaveDialog({ open, onClose }: SaveDialogProps) {
     try {
       const sceneData = serializeScene(objects);
 
-      const { error: insertError } = await supabase.from('builds').insert({
-        user_id: user.id,
-        name,
-        description,
-        scene_data: sceneData,
-        is_public: isPublic,
-      });
+      const { data: inserted, error: insertError } = await supabase
+        .from('builds')
+        .insert({
+          user_id: user.id,
+          name,
+          description,
+          scene_data: sceneData,
+          thumbnail_url: null,
+          is_public: isPublic,
+        })
+        .select('id')
+        .single();
       if (insertError) throw insertError;
+
+      const buildId = typeof inserted?.id === 'string' ? inserted.id : null;
+      if (buildId) {
+        // Best-effort: the build is already saved. Thumbnail upload failure should not
+        // block saving or prompt the user to accidentally save duplicates.
+        try {
+          const el = document.getElementById('aquascape-canvas');
+          const canvas = el instanceof HTMLCanvasElement ? el : null;
+          if (!canvas) throw new Error('Aquascape canvas not found');
+
+          const blob = await canvasToWebpBlob(canvas);
+          if (!blob) throw new Error('Failed to capture thumbnail');
+
+          const form = new FormData();
+          form.set('buildId', buildId);
+          form.set('thumbnail', blob, `${buildId}.webp`);
+
+          const res = await fetch('/api/thumbnails', { method: 'POST', body: form });
+          if (!res.ok) throw new Error(`Thumbnail upload failed (${res.status})`);
+
+          const payload = (await res.json()) as { url?: unknown };
+          const url = typeof payload.url === 'string' ? payload.url : null;
+          if (!url) throw new Error('Thumbnail upload returned no url');
+
+          const { error: updateError } = await supabase
+            .from('builds')
+            .update({ thumbnail_url: url })
+            .eq('id', buildId);
+          if (updateError) throw updateError;
+        } catch (thumbErr) {
+          // Non-fatal (see comment above).
+          // eslint-disable-next-line no-console
+          console.warn('Thumbnail upload skipped/failed:', thumbErr);
+        }
+      }
 
       onClose();
       router.refresh();
@@ -133,4 +197,3 @@ export function SaveDialog({ open, onClose }: SaveDialogProps) {
     </div>
   );
 }
-
