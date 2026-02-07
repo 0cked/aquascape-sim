@@ -4,16 +4,22 @@ import { immer } from 'zustand/middleware/immer';
 import type { EditorMode, PlacedObject } from '@/types/scene';
 import { newId } from '@/lib/utils/id';
 
+export type TransformMode = 'translate' | 'rotate' | 'scale';
+
 export type EditorStore = {
   mode: EditorMode;
   selectedAssetType: string | null;
   objects: PlacedObject[];
   selectedObjectIds: string[];
   activeObjectId: string | null;
+  transformMode: TransformMode;
+  isTransforming: boolean;
 
   reset: () => void;
   setMode: (mode: EditorMode) => void;
   selectAsset: (assetType: string) => void;
+  setTransformMode: (mode: TransformMode) => void;
+  setTransforming: (value: boolean) => void;
 
   addObject: (object: PlacedObject) => void;
   removeObject: (id: string) => void;
@@ -33,6 +39,8 @@ export const useEditorStore = create<EditorStore>()(
     objects: [],
     selectedObjectIds: [],
     activeObjectId: null,
+    transformMode: 'translate',
+    isTransforming: false,
 
     reset: () => {
       set((s) => {
@@ -41,12 +49,15 @@ export const useEditorStore = create<EditorStore>()(
         s.objects = [];
         s.selectedObjectIds = [];
         s.activeObjectId = null;
+        s.transformMode = 'translate';
+        s.isTransforming = false;
       });
     },
 
     setMode: (mode) => {
       set((s) => {
         s.mode = mode;
+        s.isTransforming = false;
         if (mode === 'select') {
           s.selectedAssetType = null;
         }
@@ -59,6 +70,19 @@ export const useEditorStore = create<EditorStore>()(
         s.selectedAssetType = assetType;
         s.selectedObjectIds = [];
         s.activeObjectId = null;
+        s.isTransforming = false;
+      });
+    },
+
+    setTransformMode: (mode) => {
+      set((s) => {
+        s.transformMode = mode;
+      });
+    },
+
+    setTransforming: (value) => {
+      set((s) => {
+        s.isTransforming = value;
       });
     },
 
@@ -69,6 +93,7 @@ export const useEditorStore = create<EditorStore>()(
         s.activeObjectId = object.id;
         s.mode = 'select';
         s.selectedAssetType = null;
+        s.isTransforming = false;
       });
     },
 

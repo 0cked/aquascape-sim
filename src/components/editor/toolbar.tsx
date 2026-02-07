@@ -14,8 +14,10 @@ export function Toolbar() {
   const mode = useEditorStore((s) => s.mode);
   const selectedAssetType = useEditorStore((s) => s.selectedAssetType);
   const selectedObjectIds = useEditorStore((s) => s.selectedObjectIds);
+  const transformMode = useEditorStore((s) => s.transformMode);
   const setMode = useEditorStore((s) => s.setMode);
   const removeObjects = useEditorStore((s) => s.removeObjects);
+  const setTransformMode = useEditorStore((s) => s.setTransformMode);
 
   const [saveOpen, setSaveOpen] = useState<boolean>(false);
   const [loadOpen, setLoadOpen] = useState<boolean>(false);
@@ -39,6 +41,18 @@ export function Toolbar() {
         e.preventDefault();
         removeObjects(selectedObjectIds);
       }
+      if (e.key === 'w' || e.key === 'W') {
+        e.preventDefault();
+        setTransformMode('translate');
+      }
+      if (e.key === 'e' || e.key === 'E') {
+        e.preventDefault();
+        setTransformMode('rotate');
+      }
+      if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        setTransformMode('scale');
+      }
       if (e.key === 'Escape') {
         setMode('select');
       }
@@ -46,7 +60,7 @@ export function Toolbar() {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [removeObjects, selectedObjectIds, setMode]);
+  }, [removeObjects, selectedObjectIds, setMode, setTransformMode]);
 
   return (
     <header className="absolute left-4 right-4 top-4 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/40 px-4 py-3 shadow-[0_24px_80px_rgba(0,0,0,0.55)] backdrop-blur">
@@ -77,6 +91,49 @@ export function Toolbar() {
         >
           Save
         </button>
+
+        <div className="hidden items-center rounded-full border border-white/10 bg-white/5 p-1 sm:flex">
+          <button
+            type="button"
+            onClick={() => setTransformMode('translate')}
+            className={[
+              'h-7 rounded-full px-3 text-xs font-medium transition',
+              transformMode === 'translate'
+                ? 'bg-white text-black'
+                : 'text-zinc-200 hover:bg-white/10',
+            ].join(' ')}
+            title="Move (W)"
+          >
+            Move
+          </button>
+          <button
+            type="button"
+            onClick={() => setTransformMode('rotate')}
+            className={[
+              'h-7 rounded-full px-3 text-xs font-medium transition',
+              transformMode === 'rotate'
+                ? 'bg-white text-black'
+                : 'text-zinc-200 hover:bg-white/10',
+            ].join(' ')}
+            title="Rotate (E)"
+          >
+            Rotate
+          </button>
+          <button
+            type="button"
+            onClick={() => setTransformMode('scale')}
+            className={[
+              'h-7 rounded-full px-3 text-xs font-medium transition',
+              transformMode === 'scale'
+                ? 'bg-white text-black'
+                : 'text-zinc-200 hover:bg-white/10',
+            ].join(' ')}
+            title="Scale (R)"
+          >
+            Scale
+          </button>
+        </div>
+
         <button
           type="button"
           onClick={() => setMode('select')}
