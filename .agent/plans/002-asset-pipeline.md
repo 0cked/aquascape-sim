@@ -12,7 +12,7 @@ The bootstrap editor proves that lighting, physics, and save/load work, but it u
 ## Progress
 
 - [x] (2026-02-07) Milestone 1: Add Draco + BasisU runtime decoders under `public/` and a reusable glTF loader wrapper for R3F.
-- [ ] Milestone 2: Add an asset generation pipeline (script) and commit starter `.glb` assets in `public/models/` (Draco-compressed).
+- [x] (2026-02-07) Milestone 2: Add an asset generation pipeline (script) and commit starter Draco-compressed `.glb` assets in `public/models/`.
 - [ ] Milestone 3: Add at least one KTX2-compressed texture and wire it into the scene (via KTX2Loader in glTF pipeline).
 - [ ] Milestone 4: Wire the editor asset catalog to include `modelUrl` + `thumbnailUrl`, render thumbnails in the sidebar, and spawn glTF models in the scene.
 - [ ] Milestone 5: Error handling and loading states for asset load failures; validation and deploy.
@@ -21,16 +21,26 @@ The bootstrap editor proves that lighting, physics, and save/load work, but it u
 
 - Observation: Drei’s `useGLTF` types are based on `three-stdlib` (not Three.js example loaders), and pnpm’s strict dependency resolution requires `three-stdlib` to be a direct dependency to import it in app code.
   Evidence: `error TS2307: Cannot find module 'three-stdlib' or its corresponding type declarations.`
+- Observation: `@gltf-transform/cli` texture compression to KTX2 requires the KTX-Software `ktx` CLI binary to be available on `$PATH`; on macOS that binary depends on a dynamic library (`libktx.*.dylib`) that must be discoverable at runtime.
+  Evidence: `uastc [FAILED: Command failed: command -v ktx ...]` and `dyld: Library not loaded: @rpath/libktx.4.dylib`.
 
 ## Decision Log
 
 - Decision: Add `three-stdlib` as a direct dependency and use its `KTX2Loader`/`GLTFLoader` types when extending Drei `useGLTF`.
   Rationale: Keeps types aligned with Drei and avoids incompatible loader type errors when wiring KTX2Loader into `useGLTF`.
   Date/Author: 2026-02-07 / Codex.
+- Decision: Add a deterministic procedural asset generator script (`scripts/generate-assets.mjs`) and commit the generated `.glb` outputs under `public/models/`.
+  Rationale: Keeps the repo self-contained and exercises the full runtime glTF pipeline (Draco + later KTX2) without waiting on external art assets.
+  Date/Author: 2026-02-07 / Codex.
+- Decision: Treat local KTX-Software binaries as developer machine tooling, and gitignore `scripts/bin/` + `scripts/lib/` rather than committing OS-specific binaries.
+  Rationale: Committing platform-specific executables is fragile and noisy; we only need the resulting KTX2-compressed assets at runtime.
+  Date/Author: 2026-02-07 / Codex.
 
 ## Outcomes & Retrospective
 
 (To be updated at milestone completions.)
+
+- (2026-02-07) Milestone 2 outcome: The repo can generate and regenerate starter Draco-compressed assets via `pnpm assets:generate`, and `public/models/` now contains committed `.glb` models for rocks, plants, wood, and equipment.
 
 ---
 
@@ -120,3 +130,9 @@ Copying decoder files is idempotent; re-running the asset generation script over
 ## Artifacts and Notes
 
 (Attach short transcripts, bundle size notes, or relevant diffs as they arise.)
+
+---
+
+Plan Revision Note (2026-02-07):
+
+Updated the living sections to record Milestone 2 completion, and documented the `ktx` tooling requirement for KTX2 texture compression (discovered while implementing the generation pipeline).

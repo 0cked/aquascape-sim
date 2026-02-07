@@ -16,6 +16,7 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
+    "assets:generate": "node scripts/generate-assets.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },

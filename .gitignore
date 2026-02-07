@@ -17,6 +17,11 @@ out/
 # testing
 coverage/
 
+# local tooling and generated artifacts
+.tmp-assets/
+scripts/bin/
+scripts/lib/
+
 # misc
 .DS_Store
 *.pem
