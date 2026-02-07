@@ -22,7 +22,7 @@ After this phase, users should see obvious quality improvements on High quality,
 
 - [x] (2026-02-07) Milestone 1: Water material + animation polish (quality-tiered detail, improved absorption look).
 - [x] (2026-02-07) Milestone 2: Underwater haze (toggleable scene fog with tuned colors/density).
-- [ ] (2026-02-07) Milestone 3: Caustics (toggleable caustics projection near the substrate).
+- [x] (2026-02-07) Milestone 3: Caustics (toggleable caustics projection near the substrate).
 - [ ] (2026-02-07) Milestone 4: Optional light shafts (God rays) integrated into post-processing on High.
 - [ ] (2026-02-07) Milestone 5: WebGL context loss handling + full validation + deploy.
 
@@ -40,6 +40,9 @@ After this phase, users should see obvious quality improvements on High quality,
 - Decision: Implement underwater haze using a toggleable `fogExp2` attached to the scene.
   Rationale: Fog is a low-code way to add depth cues and “water volume” feeling, and it is easy to disable via quality settings.
   Date/Author: 2026-02-07 / Codex.
+- Decision: Implement caustics as a lightweight animated shader plane near the substrate (instead of a multi-pass caustics simulation).
+  Rationale: The visual win is large while the perf and implementation risk is low; the effect remains fully toggleable via quality settings.
+  Date/Author: 2026-02-07 / Codex.
 
 ## Outcomes & Retrospective
 
@@ -47,6 +50,7 @@ After this phase, users should see obvious quality improvements on High quality,
 
 (2026-02-07) Milestone 1 outcome: Water shading was tuned (absorption/specular/clearcoat) and the surface mesh now adapts its geometry detail and normal recomputation rate to the selected quality preset.
 (2026-02-07) Milestone 2 outcome: The scene now supports an “Underwater fog” toggle (wired through quality settings) that adds haze/depth cues using `fogExp2`.
+(2026-02-07) Milestone 3 outcome: The scene now supports a toggleable caustics layer (`src/components/three/caustics-plane.tsx`) that projects animated highlights near the substrate on High quality.
 ## Context and Orientation
 
 Current relevant files:
@@ -175,4 +179,4 @@ Automated:
 
 Plan Revision Note (2026-02-07):
 
-Updated the living sections to record Milestone 2 completion after adding quality-controlled underwater fog and exposing it in the quality menu.
+Updated the living sections to record Milestone 3 completion after adding a toggleable, lightweight caustics projection plane and wiring it into the quality settings.

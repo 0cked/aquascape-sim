@@ -7,6 +7,7 @@ import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, use
 import { Color, Group, NoToneMapping, PCFSoftShadowMap, SRGBColorSpace } from 'three';
 
 import { AquariumTank } from '@/components/three/aquarium-tank';
+import { CausticsPlane } from '@/components/three/caustics-plane';
 import { Effects } from '@/components/three/effects';
 import { InstancedAssetLayer } from '@/components/three/instanced-asset-layer';
 import { Lighting } from '@/components/three/lighting';
@@ -51,6 +52,7 @@ export function Scene() {
   const postprocessingEnabled = useQualityStore((s) => s.postprocessingEnabled);
   const aoQuality = useQualityStore((s) => s.aoQuality);
   const fogEnabled = useQualityStore((s) => s.fogEnabled);
+  const causticsEnabled = useQualityStore((s) => s.causticsEnabled);
   const autoDegradeEnabled = useQualityStore((s) => s.autoDegradeEnabled);
   const setAutoDegradeEnabled = useQualityStore((s) => s.setAutoDegradeEnabled);
   const setAutoNotice = useQualityStore((s) => s.setAutoNotice);
@@ -220,6 +222,8 @@ export function Scene() {
           );
         })}
       </Physics>
+
+      {causticsEnabled ? <CausticsPlane /> : null}
 
       <Suspense fallback={null}>
         <InstancedAssetLayer objects={settledObjects} />
