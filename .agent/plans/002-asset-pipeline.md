@@ -13,7 +13,7 @@ The bootstrap editor proves that lighting, physics, and save/load work, but it u
 
 - [x] (2026-02-07) Milestone 1: Add Draco + BasisU runtime decoders under `public/` and a reusable glTF loader wrapper for R3F.
 - [x] (2026-02-07) Milestone 2: Add an asset generation pipeline (script) and commit starter Draco-compressed `.glb` assets in `public/models/`.
-- [ ] Milestone 3: Add at least one KTX2-compressed texture and wire it into the scene (via KTX2Loader in glTF pipeline).
+- [x] (2026-02-07) Milestone 3: Add a KTX2-compressed substrate texture and render it in the scene (via KTX2Loader in glTF pipeline).
 - [ ] Milestone 4: Wire the editor asset catalog to include `modelUrl` + `thumbnailUrl`, render thumbnails in the sidebar, and spawn glTF models in the scene.
 - [ ] Milestone 5: Error handling and loading states for asset load failures; validation and deploy.
 
@@ -41,6 +41,7 @@ The bootstrap editor proves that lighting, physics, and save/load work, but it u
 (To be updated at milestone completions.)
 
 - (2026-02-07) Milestone 2 outcome: The repo can generate and regenerate starter Draco-compressed assets via `pnpm assets:generate`, and `public/models/` now contains committed `.glb` models for rocks, plants, wood, and equipment.
+- (2026-02-07) Milestone 3 outcome: The scene substrate uses a glTF model with an embedded KTX2/BasisU texture (`KHR_texture_basisu`), proving the runtime decoders and `KTX2Loader` wiring work end-to-end.
 
 ---
 
@@ -133,6 +134,7 @@ Copying decoder files is idempotent; re-running the asset generation script over
 
 ---
 
-Plan Revision Note (2026-02-07):
+Plan Revision Notes:
 
-Updated the living sections to record Milestone 2 completion, and documented the `ktx` tooling requirement for KTX2 texture compression (discovered while implementing the generation pipeline).
+- (2026-02-07) Recorded Milestone 2 completion, and documented the `ktx` tooling requirement for KTX2 texture compression (discovered while implementing the generation pipeline).
+- (2026-02-07) Recorded Milestone 3 completion, including the first committed KTX2-compressed texture used in the running scene.

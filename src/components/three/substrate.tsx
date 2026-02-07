@@ -1,34 +1,41 @@
-import { useMemo } from 'react';
-import { Color, Float32BufferAttribute, PlaneGeometry } from 'three';
+import { Suspense, useEffect } from 'react';
+import { Mesh } from 'three';
 
 import { CuboidCollider, RigidBody } from '@react-three/rapier';
 
 import { TANK, TANK_INNER } from '@/components/three/tank-constants';
+import { useAquascapeGLTF } from '@/lib/assets/use-aquascape-gltf';
+
+function SubstrateModel() {
+  const gltf = useAquascapeGLTF('/models/substrate.glb');
+
+  useEffect(() => {
+    gltf.scene.traverse((obj) => {
+      if (obj instanceof Mesh) {
+        obj.receiveShadow = true;
+      }
+    });
+  }, [gltf]);
+
+  const scale: [number, number, number] = [TANK_INNER.width - 0.1, 1, TANK_INNER.depth - 0.1];
+
+  return (
+    <group scale={scale}>
+      <primitive object={gltf.scene} />
+    </group>
+  );
+}
+
+function SubstrateFallback() {
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+      <planeGeometry args={[TANK_INNER.width - 0.1, TANK_INNER.depth - 0.1, 1, 1]} />
+      <meshStandardMaterial color="#3b2f25" roughness={1} metalness={0} />
+    </mesh>
+  );
+}
 
 export function Substrate() {
-  const geometry = useMemo(() => {
-    const g = new PlaneGeometry(TANK_INNER.width - 0.1, TANK_INNER.depth - 0.1, 48, 48);
-
-    const colors: number[] = [];
-    const c = new Color();
-    const temp = new Color();
-    const pos = g.attributes.position;
-
-    for (let i = 0; i < pos.count; i += 1) {
-      // Slightly warm gravel/soil variation.
-      const n = Math.random();
-      const hue = 0.08 + n * 0.03; // orange/brown
-      const sat = 0.35 + n * 0.15;
-      const lit = 0.18 + n * 0.1;
-      temp.setHSL(hue, sat, lit);
-      c.copy(temp);
-      colors.push(c.r, c.g, c.b);
-    }
-
-    g.setAttribute('color', new Float32BufferAttribute(colors, 3));
-    return g;
-  }, []);
-
   const thickness = 0.2;
 
   return (
@@ -38,9 +45,9 @@ export function Substrate() {
         position={[0, -thickness / 2, 0]}
         friction={1.2}
       />
-      <mesh geometry={geometry} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <meshStandardMaterial vertexColors roughness={1} metalness={0} />
-      </mesh>
+      <Suspense fallback={<SubstrateFallback />}>
+        <SubstrateModel />
+      </Suspense>
     </RigidBody>
   );
 }
