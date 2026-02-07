@@ -17,7 +17,7 @@ This phase adds practical performance controls and guardrails. After this phase,
 - [x] (2026-02-07) Milestone 2: Adaptive performance fallback (auto-degrade on sustained low FPS; user can override).
 - [x] (2026-02-07) Milestone 3: Rendering optimizations for repeated assets (reduce cloning; add instanced static rendering where safe).
 - [x] (2026-02-07) Milestone 4: Physics tuning (fixed bodies for settled objects; safer collider/body updates during transforms).
-- [ ] (2026-02-07) Milestone 5: Regression guardrails (bundle size check script + CI `pnpm build` + documented thresholds).
+- [x] (2026-02-07) Milestone 5: Regression guardrails (bundle size check script + CI `pnpm build` + documented thresholds).
 
 ## Surprises & Discoveries
 
@@ -54,6 +54,9 @@ This phase adds practical performance controls and guardrails. After this phase,
 (2026-02-07) Milestone 2 outcome: The scene now uses Drei `PerformanceMonitor` to auto-lower quality on sustained performance decline, shows a dismissible on-screen notice, and disables further auto-degrades until the user re-enables the toggle.
 (2026-02-07) Milestone 3 outcome: Settled objects are now eligible for instanced rendering per asset type via `THREE.InstancedMesh`, and per-object GLTF rendering uses Drei `Clone` instead of manual deep-clone traversal. A dev-only “Stress” helper was added to populate the scene with many objects for performance testing.
 (2026-02-07) Milestone 4 outcome: Settled objects now use fixed Rapier bodies, while active gizmo transforms temporarily switch to kinematic bodies. Non-dynamic bodies correctly receive translation/rotation updates when transforms change.
+(2026-02-07) Milestone 5 outcome: CI now runs `pnpm build` and enforces a bundle-size guardrail via `pnpm check:bundle` using `.next/app-build-manifest.json`. The `/editor/page` JS total is currently ~613 KB raw under a 1,000,000 byte limit.
+
+(2026-02-07) Plan retrospective: The editor now has controllable quality settings, an adaptive safety net for bad FPS, fewer steady-state physics costs, and a CI guardrail against accidental JS growth. Future performance work should focus on further draw call reduction (selection hit-testing without per-object meshes) and more robust instancing for multi-mesh GLTF assets.
 
 ## Context and Orientation
 
@@ -189,4 +192,4 @@ Automated validation:
 
 Plan Revision Note (2026-02-07):
 
-Updated the living sections to record Milestone 4 completion after switching settled Rapier bodies to fixed (with kinematic only during transforms) and ensuring non-dynamic bodies receive transform updates safely.
+Updated the living sections to record Milestone 5 completion after adding a bundle-size guardrail script, running `pnpm build` in CI, and recording current measured `/editor/page` JS size.

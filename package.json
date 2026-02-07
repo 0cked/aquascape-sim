@@ -17,6 +17,7 @@
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "assets:generate": "node scripts/generate-assets.mjs",
+    "check:bundle": "node scripts/check-bundle.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },
