@@ -273,7 +273,16 @@ export const useEditorStore = create<EditorStore>()(
             const obj = s.objects[i];
             if (!obj) continue;
             if (!removeSet.has(obj.id)) continue;
-            removed.push({ index: i, object: obj, wasDynamic: s.dynamicObjectIds[obj.id] === true });
+            removed.push({
+              index: i,
+              object: {
+                ...obj,
+                position: [...obj.position] as [number, number, number],
+                rotation: [...obj.rotation] as [number, number, number],
+                scale: [...obj.scale] as [number, number, number],
+              },
+              wasDynamic: s.dynamicObjectIds[obj.id] === true,
+            });
           }
 
           s.objects = s.objects.filter((o) => !removeSet.has(o.id));

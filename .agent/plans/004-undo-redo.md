@@ -15,11 +15,12 @@ Aquascaping is iterative. Without undo/redo, users either “play it safe” or 
 - [x] (2026-02-07) Milestone 2: Convert editor actions (place, delete, duplicate) to issue commands and record history.
 - [x] (2026-02-07) Milestone 3: Record transform edits as commands (gizmo drag end and properties edits) without spamming history during drag.
 - [x] (2026-02-07) Milestone 4: Keyboard shortcuts + toolbar buttons for undo/redo, and clear history on load/reset.
-- [ ] (2026-02-07) Milestone 5: Tests, validation, and deploy.
+- [x] (2026-02-07) Milestone 5: Tests, validation, and deploy.
 
 ## Surprises & Discoveries
 
-(To be updated as surprises occur.)
+- Observation: Commands must not capture Immer draft objects from inside `set((draft) => ...)`; those proxies are revoked after the update and will crash later during undo/redo.
+  Evidence: `TypeError: Cannot perform 'get' on a proxy that has been revoked` when undoing a delete command that stored a draft `PlacedObject`.
 
 ## Decision Log
 
@@ -46,6 +47,9 @@ Aquascaping is iterative. Without undo/redo, users either “play it safe” or 
 - (2026-02-07) Milestone 2 outcome: Place/delete/duplicate now go through `executeCommand(...)` and produce undoable history entries, while preserving the existing editor UI behavior.
 - (2026-02-07) Milestone 3 outcome: Gizmo transforms and properties panel edits now push one undoable transform command per completed edit (drag end / input blur), instead of spamming the history during live interaction.
 - (2026-02-07) Milestone 4 outcome: Undo/redo is accessible via Cmd/Ctrl+Z and Shift+Cmd/Ctrl+Z (plus Ctrl/Cmd+Y), and Undo/Redo toolbar buttons reflect stack availability. Loading a build clears history to avoid undoing across unrelated scenes.
+- (2026-02-07) Milestone 5 outcome: Added an undo/redo regression test covering place/transform/delete sequences and ran full validation (`pnpm type-check && pnpm lint && pnpm test && pnpm build`) successfully.
+
+Retrospective (Phase 4 complete): Undo/redo now works across the core editor actions without drift, with standard shortcuts and discoverable toolbar buttons. The command model is already paying off by making complex edits (transforms) reversible as single steps. Next phases can build gallery/sharing and performance improvements without sacrificing editor usability.
 
 ---
 
@@ -184,3 +188,4 @@ Plan Revision Notes:
 - (2026-02-07) Recorded Milestone 2 completion after converting place/delete/duplicate actions to command execution.
 - (2026-02-07) Recorded Milestone 3 completion after introducing `commitTransform` and wiring transform edits to commit-time commands.
 - (2026-02-07) Recorded Milestone 4 completion after adding undo/redo shortcuts, toolbar buttons, and clearing history on load.
+- (2026-02-07) Recorded Milestone 5 completion after adding end-to-end undo/redo tests and running full validation + build.
