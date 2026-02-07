@@ -13,7 +13,7 @@ AquascapeSim is a browser-based 3D aquarium aquascaping simulator. After this bo
 - [x] (2026-02-07) Bootstrapped a Next.js App Router + Tailwind + TypeScript project via `create-next-app`, synced into repo root, and pinned Next.js to v15.x to match the canonical stack.
 - [x] (2026-02-07) Added baseline repo hygiene: `.gitignore` includes `.secrets/` and `.env*.local`, created `.env.local.example`, and installed the core 3D/physics/state/auth dependencies.
 - [x] (2026-02-07) Milestone 1: Repository creation, tooling setup, and first deploy (GitHub repo created; Vercel project linked; env vars set; production deploy live at `https://aquascape-sim.vercel.app`).
-- [ ] Milestone 2: 3D scene foundation — tank, water, substrate, lighting, camera
+- [x] (2026-02-07) Milestone 2: 3D scene foundation — tank, water, substrate, lighting, camera
 - [ ] Milestone 3: Post-processing pipeline — bloom, SSAO, tone mapping
 - [ ] Milestone 4: Physics integration — Rapier, gravity, collisions, surface placement
 - [ ] Milestone 5: Editor UI — toolbar, sidebar, object placement workflow
@@ -34,6 +34,9 @@ AquascapeSim is a browser-based 3D aquarium aquascaping simulator. After this bo
 - Observation: Vercel does not allow `--sensitive` environment variables to target `development` via `vercel env add`.
   Evidence: `Error: You cannot set a Sensitive Environment Variable's target to development.`
 
+- Observation: WebGPU renderer setup is not a drop-in change for the current R3F + postprocessing stack and would require additional integration work.
+  Evidence: No stable `WebGPURenderer` configuration path was used in this milestone; the editor uses the default WebGL renderer created by R3F.
+
 ## Decision Log
 
 - Decision: Scaffold the Next.js app in a temporary directory and sync it into the repo root instead of running `create-next-app` in-place.
@@ -50,6 +53,10 @@ AquascapeSim is a browser-based 3D aquarium aquascaping simulator. After this bo
 
 - Decision: Set Vercel `development` env vars without `--sensitive`.
   Rationale: The Vercel CLI rejects sensitive variables for the `development` target; production/preview were set as sensitive, and development values still come from `.env.local` for local work.
+  Date/Author: 2026-02-07 / Codex.
+
+- Decision: Use R3F's default WebGL renderer for the editor canvas in Milestone 2 (no WebGPU attempt).
+  Rationale: WebGPU in Three.js is not currently a low-risk swap-in for R3F + `@react-three/postprocessing`; bootstrap prioritizes a working editor foundation over renderer experimentation.
   Date/Author: 2026-02-07 / Codex.
 
 - Decision: Use `@react-three/rapier` instead of raw Rapier bindings.
@@ -80,6 +87,8 @@ AquascapeSim is a browser-based 3D aquarium aquascaping simulator. After this bo
 
 - Milestone 1 (2026-02-07): Repo, CI baseline tooling, and first production deployment are live.
   The GitHub repo is `0cked/aquascape-sim`, the Vercel project is linked, and the production URL is `https://aquascape-sim.vercel.app`. The landing page renders and the `/editor` route exists (placeholder).
+
+- Milestone 2 (2026-02-07): `/editor` renders an R3F scene with a glass tank, animated water surface, substrate plane, environment reflections, and orbit camera controls.
 
 ---
 
@@ -554,6 +563,8 @@ If `pnpm install` fails, delete `node_modules/` and `pnpm-lock.yaml` and try aga
 2026-02-07: Updated the living sections (`Progress`, `Surprises & Discoveries`, `Decision Log`) to reflect early bootstrap work and to record deviations from the original step sequence (temporary directory scaffold, Next v15 pin, ESLint config format).
 
 2026-02-07: Marked Milestone 1 complete and recorded the deployed production URL; added Vercel env-var sensitivity discovery and the corresponding implementation decision.
+
+2026-02-07: Marked Milestone 2 complete and recorded the WebGL renderer decision.
 
 If Supabase migration fails, check the SQL syntax, fix it, and re-run `npx supabase db push`. Migrations are idempotent if written with `CREATE TABLE IF NOT EXISTS` and `CREATE OR REPLACE FUNCTION`.
 
