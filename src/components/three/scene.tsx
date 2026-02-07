@@ -53,6 +53,7 @@ export function Scene() {
   const aoQuality = useQualityStore((s) => s.aoQuality);
   const fogEnabled = useQualityStore((s) => s.fogEnabled);
   const causticsEnabled = useQualityStore((s) => s.causticsEnabled);
+  const godRaysEnabled = useQualityStore((s) => s.godRaysEnabled);
   const autoDegradeEnabled = useQualityStore((s) => s.autoDegradeEnabled);
   const setAutoDegradeEnabled = useQualityStore((s) => s.setAutoDegradeEnabled);
   const setAutoNotice = useQualityStore((s) => s.setAutoNotice);
@@ -152,6 +153,7 @@ export function Scene() {
   }, [activeAsset, activeObject, transformProxy, updateObject]);
 
   const transformBeforeRef = useRef<TransformSnapshot | null>(null);
+  const sunRef = useRef<import('three').Mesh>(null!);
 
   return (
     <Canvas
@@ -188,6 +190,11 @@ export function Scene() {
       />
       <Lighting shadowsEnabled={shadowsEnabled} shadowMapSize={shadowMapSize} />
       {fogEnabled ? <fogExp2 attach="fog" args={['#07222c', 0.075]} /> : null}
+
+      <mesh ref={sunRef} position={[5, 9.5, 6]} visible={false}>
+        <sphereGeometry args={[0.28, 16, 16]} />
+        <meshBasicMaterial color="#ffffff" />
+      </mesh>
 
       {/* Stand / stage */}
       <mesh position={[0, -0.55, 0]} castShadow receiveShadow>
@@ -275,7 +282,7 @@ export function Scene() {
       <group ref={transformProxyRef} />
       <Water quality={preset} />
 
-      <Effects enabled={postprocessingEnabled} aoQuality={aoQuality} />
+      <Effects enabled={postprocessingEnabled} aoQuality={aoQuality} godRaysEnabled={godRaysEnabled} sun={sunRef} />
 
       <OrbitControls
         makeDefault

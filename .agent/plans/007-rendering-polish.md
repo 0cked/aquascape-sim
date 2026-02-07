@@ -23,7 +23,7 @@ After this phase, users should see obvious quality improvements on High quality,
 - [x] (2026-02-07) Milestone 1: Water material + animation polish (quality-tiered detail, improved absorption look).
 - [x] (2026-02-07) Milestone 2: Underwater haze (toggleable scene fog with tuned colors/density).
 - [x] (2026-02-07) Milestone 3: Caustics (toggleable caustics projection near the substrate).
-- [ ] (2026-02-07) Milestone 4: Optional light shafts (God rays) integrated into post-processing on High.
+- [x] (2026-02-07) Milestone 4: Optional light shafts (God rays) integrated into post-processing on High.
 - [ ] (2026-02-07) Milestone 5: WebGL context loss handling + full validation + deploy.
 
 ## Surprises & Discoveries
@@ -43,6 +43,9 @@ After this phase, users should see obvious quality improvements on High quality,
 - Decision: Implement caustics as a lightweight animated shader plane near the substrate (instead of a multi-pass caustics simulation).
   Rationale: The visual win is large while the perf and implementation risk is low; the effect remains fully toggleable via quality settings.
   Date/Author: 2026-02-07 / Codex.
+- Decision: Implement light shafts using `GodRays` in post-processing, driven by an invisible “sun” mesh near the key directional light.
+  Rationale: This yields a recognizable volumetric look with minimal scene complexity and remains easy to disable via quality settings/presets.
+  Date/Author: 2026-02-07 / Codex.
 
 ## Outcomes & Retrospective
 
@@ -51,6 +54,7 @@ After this phase, users should see obvious quality improvements on High quality,
 (2026-02-07) Milestone 1 outcome: Water shading was tuned (absorption/specular/clearcoat) and the surface mesh now adapts its geometry detail and normal recomputation rate to the selected quality preset.
 (2026-02-07) Milestone 2 outcome: The scene now supports an “Underwater fog” toggle (wired through quality settings) that adds haze/depth cues using `fogExp2`.
 (2026-02-07) Milestone 3 outcome: The scene now supports a toggleable caustics layer (`src/components/three/caustics-plane.tsx`) that projects animated highlights near the substrate on High quality.
+(2026-02-07) Milestone 4 outcome: Post-processing can now optionally render subtle light shafts via `GodRays` when enabled, using an invisible sun proxy mesh in the scene.
 ## Context and Orientation
 
 Current relevant files:
@@ -179,4 +183,4 @@ Automated:
 
 Plan Revision Note (2026-02-07):
 
-Updated the living sections to record Milestone 3 completion after adding a toggleable, lightweight caustics projection plane and wiring it into the quality settings.
+Updated the living sections to record Milestone 4 completion after integrating optional `GodRays` light shafts into post-processing and wiring the toggle through quality settings.

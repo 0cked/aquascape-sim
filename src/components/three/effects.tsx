@@ -1,11 +1,15 @@
-import { Bloom, EffectComposer, SSAO, ToneMapping, Vignette } from '@react-three/postprocessing';
+import { Bloom, EffectComposer, GodRays, SSAO, ToneMapping, Vignette } from '@react-three/postprocessing';
 import type { ReactElement } from 'react';
+import type { RefObject } from 'react';
+import type { Mesh } from 'three';
 
 import type { AoQuality } from '@/lib/store/quality-store';
 
 export type EffectsProps = {
   enabled: boolean;
   aoQuality: AoQuality;
+  godRaysEnabled: boolean;
+  sun: RefObject<Mesh>;
 };
 
 function ssaoProps(
@@ -22,7 +26,7 @@ function ssaoProps(
   }
 }
 
-export function Effects({ enabled, aoQuality }: EffectsProps): ReactElement | null {
+export function Effects({ enabled, aoQuality, godRaysEnabled, sun }: EffectsProps): ReactElement | null {
   if (!enabled) return null;
   const ssao = ssaoProps(aoQuality);
 
@@ -42,6 +46,21 @@ export function Effects({ enabled, aoQuality }: EffectsProps): ReactElement | nu
           radius={ssao.radius}
           intensity={ssao.intensity}
           luminanceInfluence={0.55}
+        />
+      ) : (
+        <></>
+      )}
+      {godRaysEnabled ? (
+        <GodRays
+          sun={sun}
+          samples={40}
+          density={0.96}
+          decay={0.93}
+          weight={0.4}
+          exposure={0.22}
+          clampMax={1.0}
+          resolutionScale={0.6}
+          blur
         />
       ) : (
         <></>
