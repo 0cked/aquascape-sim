@@ -3,11 +3,12 @@
 import { OrbitControls, PerformanceMonitor, TransformControls } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import { Physics } from '@react-three/rapier';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Color, Group, NoToneMapping, PCFSoftShadowMap, SRGBColorSpace } from 'three';
 
 import { AquariumTank } from '@/components/three/aquarium-tank';
 import { Effects } from '@/components/three/effects';
+import { InstancedAssetLayer } from '@/components/three/instanced-asset-layer';
 import { Lighting } from '@/components/three/lighting';
 import { PlacedAsset } from '@/components/three/placed-asset';
 import { PlacementHandler } from '@/components/three/placement-handler';
@@ -55,6 +56,7 @@ export function Scene() {
   const setPreset = useQualityStore((s) => s.setPreset);
   const mode = useEditorStore((s) => s.mode);
   const objects = useEditorStore((s) => s.objects);
+  const dynamicObjectIds = useEditorStore((s) => s.dynamicObjectIds);
   const selectedObjectIds = useEditorStore((s) => s.selectedObjectIds);
   const activeObjectId = useEditorStore((s) => s.activeObjectId);
   const selectObject = useEditorStore((s) => s.selectObject);
@@ -65,6 +67,10 @@ export function Scene() {
   const setObjectDynamic = useEditorStore((s) => s.setObjectDynamic);
   const commitTransform = useEditorStore((s) => s.commitTransform);
   const selectedSet = useMemo(() => new Set(selectedObjectIds), [selectedObjectIds]);
+
+  const settledObjects = useMemo(() => {
+    return objects.filter((o) => dynamicObjectIds[o.id] !== true);
+  }, [dynamicObjectIds, objects]);
 
   const activeObject = useMemo(() => {
     if (!activeObjectId) return null;
@@ -212,6 +218,10 @@ export function Scene() {
           );
         })}
       </Physics>
+
+      <Suspense fallback={null}>
+        <InstancedAssetLayer objects={settledObjects} />
+      </Suspense>
 
       {mode === 'select' && activeObject && activeAsset && transformProxy ? (
         <TransformControls

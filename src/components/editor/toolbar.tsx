@@ -8,7 +8,10 @@ import { LoadDialog } from '@/components/editor/load-dialog';
 import { SaveDialog } from '@/components/editor/save-dialog';
 import { getAssetDefinition } from '@/lib/assets/asset-catalog';
 import { useEditorStore } from '@/lib/store/editor-store';
+import { newId } from '@/lib/utils/id';
 import { useAuthUser } from '@/lib/supabase/use-auth-user';
+import { TANK_INNER, TANK } from '@/components/three/tank-constants';
+import type { PlacedObject } from '@/types/scene';
 
 export function Toolbar() {
   const { user, loading: authLoading } = useAuthUser();
@@ -23,6 +26,7 @@ export function Toolbar() {
   const setTransformMode = useEditorStore((s) => s.setTransformMode);
   const undo = useEditorStore((s) => s.undo);
   const redo = useEditorStore((s) => s.redo);
+  const setObjects = useEditorStore((s) => s.setObjects);
 
   const [saveOpen, setSaveOpen] = useState<boolean>(false);
   const [loadOpen, setLoadOpen] = useState<boolean>(false);
@@ -78,6 +82,37 @@ export function Toolbar() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [redo, removeObjects, selectedObjectIds, setMode, setTransformMode, undo]);
 
+  const seedStressScene = () => {
+    const cols = 10;
+    const rows = 8;
+    const margin = 0.35;
+    const width = TANK_INNER.width - margin * 2;
+    const depth = TANK_INNER.depth - margin * 2;
+    const floorY = TANK.glass + 0.1;
+
+    const next: PlacedObject[] = [];
+    for (let r = 0; r < rows; r += 1) {
+      for (let c = 0; c < cols; c += 1) {
+        const tX = c / (cols - 1);
+        const tZ = r / (rows - 1);
+
+        const x = -width / 2 + tX * width;
+        const z = -depth / 2 + tZ * depth;
+        const y = floorY + 0.28;
+
+        const assetType = (c + r) % 2 === 0 ? 'java_fern' : 'anubias';
+        next.push({
+          id: newId(),
+          assetType,
+          position: [x, y, z],
+          rotation: [0, (c * 0.33 + r * 0.15) % (Math.PI * 2), 0],
+          scale: [0.85, 0.85, 0.85],
+        });
+      }
+    }
+    setObjects(next);
+  };
+
   return (
     <header className="absolute left-4 right-4 top-4 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/40 px-4 py-3 shadow-[0_24px_80px_rgba(0,0,0,0.55)] backdrop-blur">
       <SaveDialog open={saveOpen} onClose={() => setSaveOpen(false)} />
@@ -91,6 +126,26 @@ export function Toolbar() {
       </div>
 
       <div className="flex items-center gap-2">
+        {process.env.NODE_ENV !== 'production' ? (
+          <>
+            <button
+              type="button"
+              onClick={seedStressScene}
+              className="hidden h-9 rounded-full border border-white/10 bg-white/5 px-4 text-sm text-zinc-100 transition enabled:hover:border-white/20 enabled:hover:bg-white/10 sm:inline-flex"
+              title="Dev-only: populate the scene with many objects"
+            >
+              Stress
+            </button>
+            <button
+              type="button"
+              onClick={() => setObjects([])}
+              className="hidden h-9 rounded-full border border-white/10 bg-white/5 px-4 text-sm text-zinc-100 transition enabled:hover:border-white/20 enabled:hover:bg-white/10 sm:inline-flex"
+              title="Dev-only: clear all objects"
+            >
+              Clear
+            </button>
+          </>
+        ) : null}
         <button
           type="button"
           onClick={() => setLoadOpen(true)}

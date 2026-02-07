@@ -1,12 +1,14 @@
 import type { RapierRigidBody } from '@react-three/rapier';
 import { BallCollider, CylinderCollider, CuboidCollider, RigidBody } from '@react-three/rapier';
 import type { ThreeEvent } from '@react-three/fiber';
-import { Suspense, useEffect, useMemo, useRef } from 'react';
-import { Euler, Mesh, Quaternion } from 'three';
+import { Clone } from '@react-three/drei';
+import { Suspense, useEffect, useRef } from 'react';
+import { Euler, Quaternion } from 'three';
 
 import { ThreeErrorBoundary } from '@/components/three/three-error-boundary';
 import { useAquascapeGLTF } from '@/lib/assets/use-aquascape-gltf';
 import { useEditorStore } from '@/lib/store/editor-store';
+import { useInstancingStore } from '@/lib/store/instancing-store';
 import type { AssetDefinition, PlaceableShape, Vec3 } from '@/types/scene';
 
 type PlacedAssetProps = {
@@ -52,20 +54,10 @@ function ShapeCollider({ shape, size }: { shape: PlaceableShape; size: Vec3 }) {
 
 function AssetModel({ url, scale }: { url: string; scale: Vec3 }) {
   const gltf = useAquascapeGLTF(url);
-  const scene = useMemo(() => gltf.scene.clone(true), [gltf.scene]);
-
-  useEffect(() => {
-    scene.traverse((obj) => {
-      if (obj instanceof Mesh) {
-        obj.castShadow = true;
-        obj.receiveShadow = true;
-      }
-    });
-  }, [scene]);
 
   return (
     <group scale={scale}>
-      <primitive object={scene} />
+      <Clone object={gltf.scene} castShadow receiveShadow />
     </group>
   );
 }
@@ -124,9 +116,11 @@ export function PlacedAsset({
   const activeObjectId = useEditorStore((s) => s.activeObjectId);
   const isTransforming = useEditorStore((s) => s.isTransforming);
   const isDynamic = useEditorStore((s) => s.dynamicObjectIds[id] === true);
+  const instancedReady = useInstancingStore((s) => s.readyAssetTypes[asset.type] === true);
   const updateObject = useEditorStore((s) => s.updateObject);
   const setObjectDynamic = useEditorStore((s) => s.setObjectDynamic);
 
+  const renderModel = isDynamic || !instancedReady;
   const isActive = id === activeObjectId;
   const bodyType =
     isDynamic && !(isActive && isTransforming) ? ('dynamic' as const) : ('kinematicPosition' as const);
@@ -201,7 +195,7 @@ export function PlacedAsset({
             label={asset.type}
             fallback={<AssetErrorFallback shape={asset.shape} size={size} />}
           >
-            <AssetModel url={asset.modelUrl} scale={scale} />
+            {renderModel ? <AssetModel url={asset.modelUrl} scale={scale} /> : null}
           </ThreeErrorBoundary>
         </Suspense>
       </group>
