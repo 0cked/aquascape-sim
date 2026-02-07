@@ -33,7 +33,8 @@ describe('editor-store', () => {
     expect(s.objects[0]?.id).toBe('obj_1');
     expect(s.mode).toBe('select');
     expect(s.selectedAssetType).toBeNull();
-    expect(s.selectedObjectId).toBe('obj_1');
+    expect(s.selectedObjectIds).toEqual(['obj_1']);
+    expect(s.activeObjectId).toBe('obj_1');
   });
 
   it('removes an object and clears selection if needed', () => {
@@ -48,7 +49,7 @@ describe('editor-store', () => {
     useEditorStore.getState().removeObject('obj_1');
     const s = useEditorStore.getState();
     expect(s.objects).toHaveLength(0);
-    expect(s.selectedObjectId).toBeNull();
+    expect(s.selectedObjectIds).toEqual([]);
+    expect(s.activeObjectId).toBeNull();
   });
 });
-

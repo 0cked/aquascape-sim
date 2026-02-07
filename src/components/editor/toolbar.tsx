@@ -13,9 +13,9 @@ export function Toolbar() {
   const { user, loading: authLoading } = useAuthUser();
   const mode = useEditorStore((s) => s.mode);
   const selectedAssetType = useEditorStore((s) => s.selectedAssetType);
-  const selectedObjectId = useEditorStore((s) => s.selectedObjectId);
+  const selectedObjectIds = useEditorStore((s) => s.selectedObjectIds);
   const setMode = useEditorStore((s) => s.setMode);
-  const removeObject = useEditorStore((s) => s.removeObject);
+  const removeObjects = useEditorStore((s) => s.removeObjects);
 
   const [saveOpen, setSaveOpen] = useState<boolean>(false);
   const [loadOpen, setLoadOpen] = useState<boolean>(false);
@@ -35,9 +35,9 @@ export function Toolbar() {
         (target instanceof HTMLElement && target.isContentEditable);
       if (isTextInput) return;
 
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedObjectId) {
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedObjectIds.length > 0) {
         e.preventDefault();
-        removeObject(selectedObjectId);
+        removeObjects(selectedObjectIds);
       }
       if (e.key === 'Escape') {
         setMode('select');
@@ -46,7 +46,7 @@ export function Toolbar() {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [removeObject, selectedObjectId, setMode]);
+  }, [removeObjects, selectedObjectIds, setMode]);
 
   return (
     <header className="absolute left-4 right-4 top-4 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/40 px-4 py-3 shadow-[0_24px_80px_rgba(0,0,0,0.55)] backdrop-blur">
@@ -87,9 +87,9 @@ export function Toolbar() {
         <button
           type="button"
           onClick={() => {
-            if (selectedObjectId) removeObject(selectedObjectId);
+            if (selectedObjectIds.length > 0) removeObjects(selectedObjectIds);
           }}
-          disabled={!selectedObjectId}
+          disabled={selectedObjectIds.length === 0}
           className="h-9 rounded-full border border-white/10 bg-white/5 px-4 text-sm text-zinc-100 transition enabled:hover:border-white/20 enabled:hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Delete

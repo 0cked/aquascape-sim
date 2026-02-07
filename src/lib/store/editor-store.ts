@@ -7,7 +7,8 @@ export type EditorStore = {
   mode: EditorMode;
   selectedAssetType: string | null;
   objects: PlacedObject[];
-  selectedObjectId: string | null;
+  selectedObjectIds: string[];
+  activeObjectId: string | null;
 
   reset: () => void;
   setMode: (mode: EditorMode) => void;
@@ -15,9 +16,10 @@ export type EditorStore = {
 
   addObject: (object: PlacedObject) => void;
   removeObject: (id: string) => void;
+  removeObjects: (ids: string[]) => void;
   setObjects: (objects: PlacedObject[]) => void;
 
-  selectObject: (id: string | null) => void;
+  selectObject: (id: string | null, opts?: { additive?: boolean }) => void;
   clearSelection: () => void;
   updateObject: (id: string, patch: Partial<Pick<PlacedObject, 'position' | 'rotation' | 'scale'>>) => void;
 };
@@ -27,14 +29,16 @@ export const useEditorStore = create<EditorStore>()(
     mode: 'select',
     selectedAssetType: null,
     objects: [],
-    selectedObjectId: null,
+    selectedObjectIds: [],
+    activeObjectId: null,
 
     reset: () => {
       set((s) => {
         s.mode = 'select';
         s.selectedAssetType = null;
         s.objects = [];
-        s.selectedObjectId = null;
+        s.selectedObjectIds = [];
+        s.activeObjectId = null;
       });
     },
 
@@ -51,14 +55,16 @@ export const useEditorStore = create<EditorStore>()(
       set((s) => {
         s.mode = 'place';
         s.selectedAssetType = assetType;
-        s.selectedObjectId = null;
+        s.selectedObjectIds = [];
+        s.activeObjectId = null;
       });
     },
 
     addObject: (object) => {
       set((s) => {
         s.objects.push(object);
-        s.selectedObjectId = object.id;
+        s.selectedObjectIds = [object.id];
+        s.activeObjectId = object.id;
         s.mode = 'select';
         s.selectedAssetType = null;
       });
@@ -67,8 +73,21 @@ export const useEditorStore = create<EditorStore>()(
     removeObject: (id) => {
       set((s) => {
         s.objects = s.objects.filter((o) => o.id !== id);
-        if (s.selectedObjectId === id) {
-          s.selectedObjectId = null;
+        s.selectedObjectIds = s.selectedObjectIds.filter((selId) => selId !== id);
+        if (s.activeObjectId === id) {
+          s.activeObjectId = s.selectedObjectIds.at(-1) ?? null;
+        }
+      });
+    },
+
+    removeObjects: (ids) => {
+      set((s) => {
+        const toRemove = new Set(ids);
+        s.objects = s.objects.filter((o) => !toRemove.has(o.id));
+
+        s.selectedObjectIds = s.selectedObjectIds.filter((selId) => !toRemove.has(selId));
+        if (s.activeObjectId && toRemove.has(s.activeObjectId)) {
+          s.activeObjectId = s.selectedObjectIds.at(-1) ?? null;
         }
       });
     },
@@ -78,19 +97,42 @@ export const useEditorStore = create<EditorStore>()(
         s.objects = objects;
         s.mode = 'select';
         s.selectedAssetType = null;
-        s.selectedObjectId = null;
+        s.selectedObjectIds = [];
+        s.activeObjectId = null;
       });
     },
 
-    selectObject: (id) => {
+    selectObject: (id, opts) => {
       set((s) => {
-        s.selectedObjectId = id;
+        if (!id) {
+          s.selectedObjectIds = [];
+          s.activeObjectId = null;
+          return;
+        }
+
+        if (opts?.additive) {
+          const exists = s.selectedObjectIds.includes(id);
+          if (exists) {
+            s.selectedObjectIds = s.selectedObjectIds.filter((selId) => selId !== id);
+            if (s.activeObjectId === id) {
+              s.activeObjectId = s.selectedObjectIds.at(-1) ?? null;
+            }
+          } else {
+            s.selectedObjectIds.push(id);
+            s.activeObjectId = id;
+          }
+          return;
+        }
+
+        s.selectedObjectIds = [id];
+        s.activeObjectId = id;
       });
     },
 
     clearSelection: () => {
       set((s) => {
-        s.selectedObjectId = null;
+        s.selectedObjectIds = [];
+        s.activeObjectId = null;
       });
     },
 

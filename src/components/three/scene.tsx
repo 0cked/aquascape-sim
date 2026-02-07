@@ -20,8 +20,9 @@ export function Scene() {
   const background = useMemo(() => new Color('#05070a'), []);
   const mode = useEditorStore((s) => s.mode);
   const objects = useEditorStore((s) => s.objects);
-  const selectedObjectId = useEditorStore((s) => s.selectedObjectId);
+  const selectedObjectIds = useEditorStore((s) => s.selectedObjectIds);
   const selectObject = useEditorStore((s) => s.selectObject);
+  const selectedSet = useMemo(() => new Set(selectedObjectIds), [selectedObjectIds]);
 
   return (
     <Canvas
@@ -67,11 +68,11 @@ export function Scene() {
               position={obj.position}
               rotation={obj.rotation}
               scale={obj.scale}
-              selected={obj.id === selectedObjectId}
+              selected={selectedSet.has(obj.id)}
               onClick={(e) => {
                 e.stopPropagation();
                 if (mode === 'place') return;
-                selectObject(obj.id);
+                selectObject(obj.id, { additive: e.nativeEvent.shiftKey });
               }}
             />
           );
