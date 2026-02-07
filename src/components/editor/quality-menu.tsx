@@ -1,0 +1,80 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
+import { useQualityStore, type QualityPreset } from '@/lib/store/quality-store';
+
+const PRESET_LABEL: Record<QualityPreset, string> = {
+  low: 'Low',
+  medium: 'Medium',
+  high: 'High',
+};
+
+export function QualityMenu() {
+  const preset = useQualityStore((s) => s.preset);
+  const setPreset = useQualityStore((s) => s.setPreset);
+
+  const [open, setOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [open]);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="h-9 rounded-full border border-white/10 bg-white/5 px-4 text-sm text-zinc-100 transition hover:border-white/20 hover:bg-white/10"
+        aria-haspopup="menu"
+        aria-expanded={open}
+      >
+        Quality: {PRESET_LABEL[preset]}
+      </button>
+
+      {open ? (
+        <div
+          className="absolute right-0 top-[calc(100%+10px)] w-56 overflow-hidden rounded-2xl border border-white/10 bg-black/80 shadow-[0_24px_90px_rgba(0,0,0,0.7)] backdrop-blur"
+          role="menu"
+        >
+          <div className="border-b border-white/10 px-4 py-3">
+            <div className="text-xs font-medium text-zinc-100">Rendering Quality</div>
+            <div className="mt-1 text-[11px] text-zinc-400">DPR, shadows, and post-processing.</div>
+          </div>
+
+          <div className="p-2">
+            {(['low', 'medium', 'high'] as const).map((p) => {
+              const active = p === preset;
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setPreset(p);
+                    setOpen(false);
+                  }}
+                  className={[
+                    'flex h-10 w-full items-center justify-between rounded-xl px-3 text-sm transition',
+                    active ? 'bg-white text-black' : 'text-zinc-200 hover:bg-white/10',
+                  ].join(' ')}
+                >
+                  <div className="font-medium">{PRESET_LABEL[p]}</div>
+                  <div className="text-xs opacity-70">
+                    {p === 'low' ? 'Fastest' : p === 'medium' ? 'Balanced' : 'Prettiest'}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+

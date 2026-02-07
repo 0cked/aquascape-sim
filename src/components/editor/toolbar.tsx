@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { UserMenu } from '@/components/auth/user-menu';
+import { QualityMenu } from '@/components/editor/quality-menu';
 import { LoadDialog } from '@/components/editor/load-dialog';
 import { SaveDialog } from '@/components/editor/save-dialog';
 import { getAssetDefinition } from '@/lib/assets/asset-catalog';
@@ -125,6 +126,10 @@ export function Toolbar() {
         >
           Redo
         </button>
+
+        <div className="hidden sm:block">
+          <QualityMenu />
+        </div>
 
         <div className="hidden items-center rounded-full border border-white/10 bg-white/5 p-1 sm:flex">
           <button

@@ -17,6 +17,7 @@ import { Water } from '@/components/three/water';
 import { getAssetDefinition } from '@/lib/assets/asset-catalog';
 import { useEditorStore } from '@/lib/store/editor-store';
 import type { TransformSnapshot } from '@/lib/store/editor-store';
+import { useQualityStore } from '@/lib/store/quality-store';
 import type { PlaceableShape, Vec3 } from '@/types/scene';
 
 function clamp(v: number, min: number, max: number): number {
@@ -42,6 +43,11 @@ function halfExtents(shape: PlaceableShape, size: Vec3): Vec3 {
 
 export function Scene() {
   const background = useMemo(() => new Color('#05070a'), []);
+  const dprMax = useQualityStore((s) => s.dprMax);
+  const shadowsEnabled = useQualityStore((s) => s.shadowsEnabled);
+  const shadowMapSize = useQualityStore((s) => s.shadowMapSize);
+  const postprocessingEnabled = useQualityStore((s) => s.postprocessingEnabled);
+  const aoQuality = useQualityStore((s) => s.aoQuality);
   const mode = useEditorStore((s) => s.mode);
   const objects = useEditorStore((s) => s.objects);
   const selectedObjectIds = useEditorStore((s) => s.selectedObjectIds);
@@ -136,8 +142,8 @@ export function Scene() {
   return (
     <Canvas
       id="aquascape-canvas"
-      shadows
-      dpr={[1, 1.75]}
+      shadows={shadowsEnabled}
+      dpr={[1, dprMax]}
       camera={{ position: [9, 6.5, 9], fov: 42, near: 0.1, far: 200 }}
       gl={{
         antialias: true,
@@ -146,7 +152,6 @@ export function Scene() {
         preserveDrawingBuffer: true,
       }}
       onCreated={({ gl, scene }) => {
-        gl.shadowMap.enabled = true;
         gl.shadowMap.type = PCFSoftShadowMap;
         // Post-processing owns tone mapping to avoid double application.
         gl.toneMapping = NoToneMapping;
@@ -155,7 +160,7 @@ export function Scene() {
         scene.background = background;
       }}
     >
-      <Lighting />
+      <Lighting shadowsEnabled={shadowsEnabled} shadowMapSize={shadowMapSize} />
 
       {/* Stand / stage */}
       <mesh position={[0, -0.55, 0]} castShadow receiveShadow>
@@ -237,7 +242,7 @@ export function Scene() {
       <group ref={transformProxyRef} />
       <Water />
 
-      <Effects />
+      <Effects enabled={postprocessingEnabled} aoQuality={aoQuality} />
 
       <OrbitControls
         makeDefault
