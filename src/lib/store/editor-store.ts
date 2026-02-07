@@ -6,12 +6,21 @@ import type { EditorMode, PlacedObject } from '@/types/scene';
 import { newId } from '@/lib/utils/id';
 
 export type TransformMode = 'translate' | 'rotate' | 'scale';
+export type TransformSnapshot = {
+  position: [number, number, number];
+  rotation: [number, number, number];
+  scale: [number, number, number];
+};
 
 export type EditorCommand = {
   name: string;
   do: (state: Draft<EditorStore>) => void;
   undo: (state: Draft<EditorStore>) => void;
 };
+
+function sameVec3(a: [number, number, number], b: [number, number, number]): boolean {
+  return a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
+}
 
 export type EditorStore = {
   mode: EditorMode;
@@ -33,6 +42,7 @@ export type EditorStore = {
   setTransforming: (value: boolean) => void;
   setObjectDynamic: (id: string, dynamic: boolean) => void;
   executeCommand: (command: EditorCommand) => void;
+  commitTransform: (id: string, before: TransformSnapshot, after: TransformSnapshot, label?: string) => void;
   undo: () => void;
   redo: () => void;
   clearHistory: () => void;
@@ -128,6 +138,54 @@ export const useEditorStore = create<EditorStore>()(
           s.undoStack.shift();
         }
       });
+    },
+
+    commitTransform: (id, before, after, label = 'transform') => {
+      const beforeSnap: TransformSnapshot = {
+        position: [...before.position] as [number, number, number],
+        rotation: [...before.rotation] as [number, number, number],
+        scale: [...before.scale] as [number, number, number],
+      };
+      const afterSnap: TransformSnapshot = {
+        position: [...after.position] as [number, number, number],
+        rotation: [...after.rotation] as [number, number, number],
+        scale: [...after.scale] as [number, number, number],
+      };
+
+      if (
+        sameVec3(beforeSnap.position, afterSnap.position) &&
+        sameVec3(beforeSnap.rotation, afterSnap.rotation) &&
+        sameVec3(beforeSnap.scale, afterSnap.scale)
+      ) {
+        return;
+      }
+
+      const wasDynamic = get().dynamicObjectIds[id] === true;
+
+      const cmd: EditorCommand = {
+        name: `${label}:${id}`,
+        do: (s) => {
+          const obj = s.objects.find((o) => o.id === id);
+          if (!obj) return;
+          obj.position = afterSnap.position;
+          obj.rotation = afterSnap.rotation;
+          obj.scale = afterSnap.scale;
+          delete s.dynamicObjectIds[id];
+          s.isTransforming = false;
+        },
+        undo: (s) => {
+          const obj = s.objects.find((o) => o.id === id);
+          if (!obj) return;
+          obj.position = beforeSnap.position;
+          obj.rotation = beforeSnap.rotation;
+          obj.scale = beforeSnap.scale;
+          if (wasDynamic) s.dynamicObjectIds[id] = true;
+          else delete s.dynamicObjectIds[id];
+          s.isTransforming = false;
+        },
+      };
+
+      get().executeCommand(cmd);
     },
 
     undo: () => {

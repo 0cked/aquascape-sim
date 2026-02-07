@@ -3,7 +3,7 @@
 import { OrbitControls, TransformControls } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import { Physics } from '@react-three/rapier';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Color, Group, NoToneMapping, PCFSoftShadowMap, SRGBColorSpace } from 'three';
 
 import { AquariumTank } from '@/components/three/aquarium-tank';
@@ -16,6 +16,7 @@ import { TANK, TANK_INNER } from '@/components/three/tank-constants';
 import { Water } from '@/components/three/water';
 import { getAssetDefinition } from '@/lib/assets/asset-catalog';
 import { useEditorStore } from '@/lib/store/editor-store';
+import type { TransformSnapshot } from '@/lib/store/editor-store';
 import type { PlaceableShape, Vec3 } from '@/types/scene';
 
 function clamp(v: number, min: number, max: number): number {
@@ -51,6 +52,7 @@ export function Scene() {
   const setTransforming = useEditorStore((s) => s.setTransforming);
   const updateObject = useEditorStore((s) => s.updateObject);
   const setObjectDynamic = useEditorStore((s) => s.setObjectDynamic);
+  const commitTransform = useEditorStore((s) => s.commitTransform);
   const selectedSet = useMemo(() => new Set(selectedObjectIds), [selectedObjectIds]);
 
   const activeObject = useMemo(() => {
@@ -129,6 +131,8 @@ export function Scene() {
     });
   }, [activeAsset, activeObject, transformProxy, updateObject]);
 
+  const transformBeforeRef = useRef<TransformSnapshot | null>(null);
+
   return (
     <Canvas
       shadows
@@ -189,10 +193,35 @@ export function Scene() {
         <TransformControls
           mode={transformMode}
           object={transformProxy}
-          onMouseDown={() => setTransforming(true)}
+          onMouseDown={() => {
+            transformBeforeRef.current = {
+              position: [...activeObject.position] as Vec3,
+              rotation: [...activeObject.rotation] as Vec3,
+              scale: [...activeObject.scale] as Vec3,
+            };
+            setTransforming(true);
+          }}
           onMouseUp={() => {
             applyProxyTransform();
-            setObjectDynamic(activeObject.id, false);
+            const before = transformBeforeRef.current;
+            transformBeforeRef.current = null;
+            const afterObj = useEditorStore
+              .getState()
+              .objects.find((o) => o.id === activeObject.id);
+            if (before && afterObj) {
+              commitTransform(
+                activeObject.id,
+                before,
+                {
+                  position: [...afterObj.position] as Vec3,
+                  rotation: [...afterObj.rotation] as Vec3,
+                  scale: [...afterObj.scale] as Vec3,
+                },
+                'gizmo'
+              );
+            } else {
+              setObjectDynamic(activeObject.id, false);
+            }
             setTransforming(false);
           }}
           onObjectChange={() => {

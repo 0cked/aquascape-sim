@@ -1,10 +1,11 @@
 'use client';
 
 import Image from 'next/image';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 
 import { getAssetDefinition } from '@/lib/assets/asset-catalog';
 import { useEditorStore } from '@/lib/store/editor-store';
+import type { TransformSnapshot } from '@/lib/store/editor-store';
 
 function degrees(rad: number): number {
   return (rad * 180) / Math.PI;
@@ -21,6 +22,7 @@ export function PropertiesPanel() {
   const updateObject = useEditorStore((s) => s.updateObject);
   const removeObjects = useEditorStore((s) => s.removeObjects);
   const duplicateObjects = useEditorStore((s) => s.duplicateObjects);
+  const commitTransform = useEditorStore((s) => s.commitTransform);
 
   const activeObject = useMemo(() => {
     if (!activeObjectId) return null;
@@ -29,6 +31,40 @@ export function PropertiesPanel() {
 
   const asset = activeObject ? getAssetDefinition(activeObject.assetType) : undefined;
   const selectionCount = selectedObjectIds.length;
+
+  const transformBeforeRef = useRef<{ id: string; snap: TransformSnapshot } | null>(null);
+
+  const beginTransformEdit = () => {
+    if (!activeObject) return;
+    transformBeforeRef.current = {
+      id: activeObject.id,
+      snap: {
+        position: [...activeObject.position] as [number, number, number],
+        rotation: [...activeObject.rotation] as [number, number, number],
+        scale: [...activeObject.scale] as [number, number, number],
+      },
+    };
+  };
+
+  const commitTransformEdit = () => {
+    const before = transformBeforeRef.current;
+    transformBeforeRef.current = null;
+    if (!before) return;
+
+    const afterObj = useEditorStore.getState().objects.find((o) => o.id === before.id);
+    if (!afterObj) return;
+
+    commitTransform(
+      before.id,
+      before.snap,
+      {
+        position: [...afterObj.position] as [number, number, number],
+        rotation: [...afterObj.rotation] as [number, number, number],
+        scale: [...afterObj.scale] as [number, number, number],
+      },
+      'panel'
+    );
+  };
 
   return (
     <aside className="absolute bottom-4 right-4 top-16 w-72 overflow-hidden rounded-2xl border border-white/10 bg-black/40 shadow-[0_24px_80px_rgba(0,0,0,0.55)] backdrop-blur">
@@ -82,12 +118,17 @@ export function PropertiesPanel() {
                         type="number"
                         step={0.05}
                         value={activeObject.position[idx]}
+                        onFocus={beginTransformEdit}
                         onChange={(e) => {
                           const next = Number(e.target.value);
                           const pos = [...activeObject.position] as [number, number, number];
                           pos[idx] = Number.isFinite(next) ? next : pos[idx];
                           updateObject(activeObject.id, { position: pos });
                         }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur();
+                        }}
+                        onBlur={commitTransformEdit}
                         className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-2 py-1.5 text-sm text-zinc-100 outline-none focus:border-white/20"
                       />
                     </label>
@@ -105,12 +146,17 @@ export function PropertiesPanel() {
                         type="number"
                         step={1}
                         value={Number(degrees(activeObject.rotation[idx]).toFixed(1))}
+                        onFocus={beginTransformEdit}
                         onChange={(e) => {
                           const nextDeg = Number(e.target.value);
                           const rot = [...activeObject.rotation] as [number, number, number];
                           if (Number.isFinite(nextDeg)) rot[idx] = radians(nextDeg);
                           updateObject(activeObject.id, { rotation: rot });
                         }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur();
+                        }}
+                        onBlur={commitTransformEdit}
                         className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-2 py-1.5 text-sm text-zinc-100 outline-none focus:border-white/20"
                       />
                     </label>
@@ -129,12 +175,17 @@ export function PropertiesPanel() {
                         step={0.05}
                         min={0.1}
                         value={activeObject.scale[idx]}
+                        onFocus={beginTransformEdit}
                         onChange={(e) => {
                           const next = Number(e.target.value);
                           const scl = [...activeObject.scale] as [number, number, number];
                           if (Number.isFinite(next)) scl[idx] = next;
                           updateObject(activeObject.id, { scale: scl });
                         }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur();
+                        }}
+                        onBlur={commitTransformEdit}
                         className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-2 py-1.5 text-sm text-zinc-100 outline-none focus:border-white/20"
                       />
                     </label>
