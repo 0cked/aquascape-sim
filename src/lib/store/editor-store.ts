@@ -1,10 +1,17 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
+import type { Draft } from 'immer';
 
 import type { EditorMode, PlacedObject } from '@/types/scene';
 import { newId } from '@/lib/utils/id';
 
 export type TransformMode = 'translate' | 'rotate' | 'scale';
+
+export type EditorCommand = {
+  name: string;
+  do: (state: Draft<EditorStore>) => void;
+  undo: (state: Draft<EditorStore>) => void;
+};
 
 export type EditorStore = {
   mode: EditorMode;
@@ -15,6 +22,9 @@ export type EditorStore = {
   transformMode: TransformMode;
   isTransforming: boolean;
   dynamicObjectIds: Record<string, true>;
+  undoStack: EditorCommand[];
+  redoStack: EditorCommand[];
+  historyLimit: number;
 
   reset: () => void;
   setMode: (mode: EditorMode) => void;
@@ -22,6 +32,10 @@ export type EditorStore = {
   setTransformMode: (mode: TransformMode) => void;
   setTransforming: (value: boolean) => void;
   setObjectDynamic: (id: string, dynamic: boolean) => void;
+  executeCommand: (command: EditorCommand) => void;
+  undo: () => void;
+  redo: () => void;
+  clearHistory: () => void;
 
   addObject: (object: PlacedObject) => void;
   removeObject: (id: string) => void;
@@ -44,6 +58,9 @@ export const useEditorStore = create<EditorStore>()(
     transformMode: 'translate',
     isTransforming: false,
     dynamicObjectIds: {},
+    undoStack: [],
+    redoStack: [],
+    historyLimit: 100,
 
     reset: () => {
       set((s) => {
@@ -55,6 +72,8 @@ export const useEditorStore = create<EditorStore>()(
         s.transformMode = 'translate';
         s.isTransforming = false;
         s.dynamicObjectIds = {};
+        s.undoStack = [];
+        s.redoStack = [];
       });
     },
 
@@ -97,6 +116,42 @@ export const useEditorStore = create<EditorStore>()(
         } else {
           delete s.dynamicObjectIds[id];
         }
+      });
+    },
+
+    executeCommand: (command) => {
+      set((s) => {
+        command.do(s);
+        s.undoStack.push(command);
+        s.redoStack = [];
+        if (s.undoStack.length > s.historyLimit) {
+          s.undoStack.shift();
+        }
+      });
+    },
+
+    undo: () => {
+      set((s) => {
+        const cmd = s.undoStack.pop();
+        if (!cmd) return;
+        cmd.undo(s);
+        s.redoStack.push(cmd);
+      });
+    },
+
+    redo: () => {
+      set((s) => {
+        const cmd = s.redoStack.pop();
+        if (!cmd) return;
+        cmd.do(s);
+        s.undoStack.push(cmd);
+      });
+    },
+
+    clearHistory: () => {
+      set((s) => {
+        s.undoStack = [];
+        s.redoStack = [];
       });
     },
 
