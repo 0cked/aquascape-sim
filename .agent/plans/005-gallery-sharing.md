@@ -14,7 +14,7 @@ Saving builds is useful, but without thumbnails and sharing, it is hard to brows
 - [x] (2026-02-07) Milestone 1: Database schema for likes and public gallery queries (migrations + RLS).
 - [x] (2026-02-07) Milestone 2: Thumbnail capture on save and upload to Supabase Storage via a server route.
 - [x] (2026-02-07) Milestone 3: `/gallery` page listing public builds with thumbnails and pagination.
-- [ ] (2026-02-07) Milestone 4: Share/open flow: `/editor?build=<id>` loads builds (public or owned) and clears undo history.
+- [x] (2026-02-07) Milestone 4: Share/open flow: `/editor?build=<id>` loads builds (public or owned) and clears undo history.
 - [ ] (2026-02-07) Milestone 5: Likes UI + validation + deploy.
 
 ## Surprises & Discoveries
@@ -38,6 +38,9 @@ Saving builds is useful, but without thumbnails and sharing, it is hard to brows
 - Decision: Render gallery thumbnails with a plain `<img>` rather than `next/image`.
   Rationale: Supabase Storage thumbnails are hosted on a remote domain and we have not configured `next.config.ts` `images.remotePatterns` yet; `<img>` avoids build-time config coupling for this milestone.
   Date/Author: 2026-02-07 / Codex.
+- Decision: Load shared builds client-side in the editor via `useSearchParams()` + Supabase browser client.
+  Rationale: The editor is already client-rendered for 3D; using the browser client avoids server-side query param plumbing and ensures RLS behaves consistently (public builds readable by anyone, private builds readable only by owner).
+  Date/Author: 2026-02-07 / Codex.
 
 ## Outcomes & Retrospective
 
@@ -46,12 +49,13 @@ Saving builds is useful, but without thumbnails and sharing, it is hard to brows
 - (2026-02-07) Milestone 1 outcome: Supabase migration `002_build_likes.sql` adds `build_likes` with RLS policies suitable for a public gallery like count and authenticated like/unlike.
 - (2026-02-07) Milestone 2 outcome: Saving a build captures a downscaled WebP thumbnail from the 3D canvas and uploads it via `POST /api/thumbnails`, storing the resulting `thumbnail_url` on the build record.
 - (2026-02-07) Milestone 3 outcome: `/gallery` lists public builds with thumbnails, author info, and simple pagination via `?page=`, with cards that open builds in the editor.
+- (2026-02-07) Milestone 4 outcome: Visiting `/editor?build=<id>` fetches the build (if public or owned), loads its `scene_data` into the editor (clearing selection + undo history via `setObjects(...)`), and shows a small status banner.
 
 ---
 
 Plan Revision Note (2026-02-07):
 
-Updated the living sections to record Milestone 3 completion (new `/gallery` page), including a decision to use `<img>` instead of `next/image` for remote Supabase thumbnail URLs.
+Updated the living sections to record Milestone 4 completion (share/open flow), including a decision to implement query-param build loading as a small client component in the editor page.
 
 ---
 
