@@ -1,32 +1,71 @@
 import { useFrame } from '@react-three/fiber';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Color, MeshPhysicalMaterial, PlaneGeometry } from 'three';
 
 import { TANK, TANK_INNER } from '@/components/three/tank-constants';
+import type { QualityPreset } from '@/lib/store/quality-store';
 
-export function Water() {
+export type WaterProps = {
+  quality: QualityPreset;
+};
+
+function segmentsForQuality(quality: QualityPreset): number {
+  switch (quality) {
+    case 'low':
+      return 24;
+    case 'medium':
+      return 42;
+    case 'high':
+    default:
+      return 64;
+  }
+}
+
+function normalRecomputeStride(quality: QualityPreset): number {
+  switch (quality) {
+    case 'low':
+      return 4;
+    case 'medium':
+      return 2;
+    case 'high':
+    default:
+      return 1;
+  }
+}
+
+export function Water({ quality }: WaterProps) {
   const { geometry, basePositions } = useMemo(() => {
-    const g = new PlaneGeometry(TANK_INNER.width - 0.08, TANK_INNER.depth - 0.08, 64, 64);
+    const seg = segmentsForQuality(quality);
+    const g = new PlaneGeometry(TANK_INNER.width - 0.08, TANK_INNER.depth - 0.08, seg, seg);
     const positions = g.attributes.position.array as Float32Array;
     return { geometry: g, basePositions: positions.slice() };
-  }, []);
+  }, [quality]);
 
   const material = useMemo(() => {
     return new MeshPhysicalMaterial({
-      color: new Color('#006994'),
-      roughness: 0.06,
+      color: new Color('#0a5e7a'),
+      roughness: 0.045,
       metalness: 0,
-      transmission: 0.8,
-      thickness: 0.35,
+      transmission: 0.9,
+      thickness: 0.65,
       ior: 1.33,
-      attenuationColor: new Color('#0b3d4f'),
-      attenuationDistance: 2.2,
+      attenuationColor: new Color('#0a2a33'),
+      attenuationDistance: 1.65,
+      clearcoat: 0.6,
+      clearcoatRoughness: 0.035,
+      specularIntensity: 0.85,
+      specularColor: new Color('#bfefff'),
       transparent: true,
-      opacity: 0.75,
+      opacity: 0.62,
     });
   }, []);
 
   const ref = useRef<PlaneGeometry>(geometry);
+  useEffect(() => {
+    ref.current = geometry;
+  }, [geometry]);
+  const normalStride = useMemo(() => normalRecomputeStride(quality), [quality]);
+  const frameRef = useRef<number>(0);
 
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime();
@@ -45,7 +84,10 @@ export function Water() {
     }
 
     pos.needsUpdate = true;
-    g.computeVertexNormals();
+    frameRef.current += 1;
+    if (frameRef.current % normalStride === 0) {
+      g.computeVertexNormals();
+    }
   });
 
   return (

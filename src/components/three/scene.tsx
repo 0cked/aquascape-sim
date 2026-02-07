@@ -267,7 +267,7 @@ export function Scene() {
 
       {/* Proxy object that TransformControls manipulates; we translate it into store updates. */}
       <group ref={transformProxyRef} />
-      <Water />
+      <Water quality={preset} />
 
       <Effects enabled={postprocessingEnabled} aoQuality={aoQuality} />
 
