@@ -2,12 +2,14 @@
 
 import { OrbitControls } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
+import { Physics } from '@react-three/rapier';
 import { useMemo } from 'react';
 import { Color, NoToneMapping, PCFSoftShadowMap, SRGBColorSpace } from 'three';
 
 import { AquariumTank } from '@/components/three/aquarium-tank';
 import { Effects } from '@/components/three/effects';
 import { Lighting } from '@/components/three/lighting';
+import { PlaceableObject } from '@/components/three/placeable-object';
 import { Substrate } from '@/components/three/substrate';
 import { Water } from '@/components/three/water';
 
@@ -42,8 +44,36 @@ export function Scene() {
         <meshStandardMaterial color="#1b1f22" roughness={0.9} />
       </mesh>
 
-      <AquariumTank />
-      <Substrate />
+      <Physics gravity={[0, -4.9, 0]} debug={false}>
+        <AquariumTank />
+        <Substrate />
+
+        {/* Temporary test objects; editor placement replaces these in Milestone 5. */}
+        <PlaceableObject
+          position={[-0.9, 3.2, 0.1]}
+          shape="box"
+          size={[0.7, 0.45, 0.7]}
+          color="#6b7280"
+        />
+        <PlaceableObject
+          position={[0.2, 3.5, -0.4]}
+          shape="sphere"
+          size={[0.55, 0.55, 0.55]}
+          color="#4b5563"
+        />
+        <PlaceableObject
+          position={[0.8, 3.0, 0.4]}
+          shape="cylinder"
+          size={[0.45, 0.85, 0.45]}
+          color="#7c3aed"
+        />
+        <PlaceableObject
+          position={[0.0, 3.7, 0.0]}
+          shape="box"
+          size={[0.85, 0.55, 0.5]}
+          color="#9ca3af"
+        />
+      </Physics>
       <Water />
 
       <Effects />

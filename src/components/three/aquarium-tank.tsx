@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { Color, MeshPhysicalMaterial } from 'three';
 
+import { CuboidCollider, RigidBody } from '@react-three/rapier';
+
 import { TANK } from '@/components/three/tank-constants';
 
 export function AquariumTank() {
@@ -26,57 +28,78 @@ export function AquariumTank() {
   const t = TANK.glass;
 
   return (
-    <group>
-      {/* Bottom */}
-      <mesh
-        position={[0, t / 2, 0]}
-        castShadow={false}
-        receiveShadow
-        material={glassMaterial}
-      >
-        <boxGeometry args={[w, t, d]} />
-      </mesh>
-
-      {/* Front */}
-      <mesh
+    <RigidBody type="fixed" colliders={false}>
+      {/* Colliders (match the visible glass panels). */}
+      <CuboidCollider args={[w / 2, t / 2, d / 2]} position={[0, t / 2, 0]} />
+      <CuboidCollider
+        args={[w / 2, h / 2, t / 2]}
         position={[0, h / 2, d / 2 - t / 2]}
-        castShadow={false}
-        receiveShadow
-        material={glassMaterial}
-      >
-        <boxGeometry args={[w, h, t]} />
-      </mesh>
-
-      {/* Back */}
-      <mesh
+      />
+      <CuboidCollider
+        args={[w / 2, h / 2, t / 2]}
         position={[0, h / 2, -d / 2 + t / 2]}
-        castShadow={false}
-        receiveShadow
-        material={glassMaterial}
-      >
-        <boxGeometry args={[w, h, t]} />
-      </mesh>
-
-      {/* Left */}
-      <mesh
+      />
+      <CuboidCollider
+        args={[t / 2, h / 2, d / 2]}
         position={[-w / 2 + t / 2, h / 2, 0]}
-        castShadow={false}
-        receiveShadow
-        material={glassMaterial}
-      >
-        <boxGeometry args={[t, h, d]} />
-      </mesh>
-
-      {/* Right */}
-      <mesh
+      />
+      <CuboidCollider
+        args={[t / 2, h / 2, d / 2]}
         position={[w / 2 - t / 2, h / 2, 0]}
-        castShadow={false}
-        receiveShadow
-        material={glassMaterial}
-      >
-        <boxGeometry args={[t, h, d]} />
-      </mesh>
-    </group>
+      />
+
+      {/* Visible glass panels */}
+      <group>
+        {/* Bottom */}
+        <mesh
+          position={[0, t / 2, 0]}
+          castShadow={false}
+          receiveShadow
+          material={glassMaterial}
+        >
+          <boxGeometry args={[w, t, d]} />
+        </mesh>
+
+        {/* Front */}
+        <mesh
+          position={[0, h / 2, d / 2 - t / 2]}
+          castShadow={false}
+          receiveShadow
+          material={glassMaterial}
+        >
+          <boxGeometry args={[w, h, t]} />
+        </mesh>
+
+        {/* Back */}
+        <mesh
+          position={[0, h / 2, -d / 2 + t / 2]}
+          castShadow={false}
+          receiveShadow
+          material={glassMaterial}
+        >
+          <boxGeometry args={[w, h, t]} />
+        </mesh>
+
+        {/* Left */}
+        <mesh
+          position={[-w / 2 + t / 2, h / 2, 0]}
+          castShadow={false}
+          receiveShadow
+          material={glassMaterial}
+        >
+          <boxGeometry args={[t, h, d]} />
+        </mesh>
+
+        {/* Right */}
+        <mesh
+          position={[w / 2 - t / 2, h / 2, 0]}
+          castShadow={false}
+          receiveShadow
+          material={glassMaterial}
+        >
+          <boxGeometry args={[t, h, d]} />
+        </mesh>
+      </group>
+    </RigidBody>
   );
 }
-

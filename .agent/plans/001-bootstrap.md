@@ -15,7 +15,7 @@ AquascapeSim is a browser-based 3D aquarium aquascaping simulator. After this bo
 - [x] (2026-02-07) Milestone 1: Repository creation, tooling setup, and first deploy (GitHub repo created; Vercel project linked; env vars set; production deploy live at `https://aquascape-sim.vercel.app`).
 - [x] (2026-02-07) Milestone 2: 3D scene foundation — tank, water, substrate, lighting, camera
 - [x] (2026-02-07) Milestone 3: Post-processing pipeline — bloom, SSAO, tone mapping
-- [ ] Milestone 4: Physics integration — Rapier, gravity, collisions, surface placement
+- [x] (2026-02-07) Milestone 4: Physics integration — Rapier, gravity, collisions, surface placement
 - [ ] Milestone 5: Editor UI — toolbar, sidebar, object placement workflow
 - [ ] Milestone 6: Supabase integration — auth, database schema, save/load builds
 - [ ] Milestone 7: Polish, testing, and final deploy
@@ -39,6 +39,9 @@ AquascapeSim is a browser-based 3D aquarium aquascaping simulator. After this bo
 
 - Observation: With pnpm's strict dependency isolation, importing `postprocessing` directly from app code failed unless it was a direct dependency (even though `@react-three/postprocessing` depends on it).
   Evidence: `error TS2307: Cannot find module 'postprocessing' or its corresponding type declarations.`
+
+- Observation: Adding Rapier physics increases the editor route bundle substantially (WASM + bindings).
+  Evidence: `Route (app) /editor Size 1.19 MB First Load JS 1.3 MB` (from `pnpm build` output after physics integration).
 
 ## Decision Log
 
@@ -64,6 +67,14 @@ AquascapeSim is a browser-based 3D aquarium aquascaping simulator. After this bo
 
 - Decision: Use `SSAO` from `@react-three/postprocessing` (with `EffectComposer enableNormalPass`) instead of `N8AO`.
   Rationale: The current `N8AO` wrapper includes an explicit note about memory leaks without upstream disposal; bootstrap favors stable lifecycle/disposal behavior.
+  Date/Author: 2026-02-07 / Codex.
+
+- Decision: Represent the aquarium tank boundaries as 5 fixed cuboid colliders (bottom + 4 walls) sized to match the visible glass panels.
+  Rationale: Simple, stable colliders are sufficient for bootstrap placement/collision behavior; later milestones can swap in more accurate colliders or mesh colliders if needed.
+  Date/Author: 2026-02-07 / Codex.
+
+- Decision: Use reduced gravity (`[0, -4.9, 0]`) and high damping on dynamic objects to approximate underwater resistance.
+  Rationale: Objects should settle quickly and feel “heavier” in water without introducing buoyancy complexity at bootstrap time.
   Date/Author: 2026-02-07 / Codex.
 
 - Decision: Use `@react-three/rapier` instead of raw Rapier bindings.
@@ -98,6 +109,8 @@ AquascapeSim is a browser-based 3D aquarium aquascaping simulator. After this bo
 - Milestone 2 (2026-02-07): `/editor` renders an R3F scene with a glass tank, animated water surface, substrate plane, environment reflections, and orbit camera controls.
 
 - Milestone 3 (2026-02-07): `/editor` has a post-processing stack (bloom, SSAO, vignette, and filmic tone mapping via `ToneMapping`) that makes the scene noticeably more cinematic.
+
+- Milestone 4 (2026-02-07): Dynamic objects fall under gravity, collide with the substrate, and are constrained by the tank wall colliders (Rapier via `@react-three/rapier`).
 
 ---
 
@@ -576,6 +589,8 @@ If `pnpm install` fails, delete `node_modules/` and `pnpm-lock.yaml` and try aga
 2026-02-07: Marked Milestone 2 complete and recorded the WebGL renderer decision.
 
 2026-02-07: Marked Milestone 3 complete; recorded the pnpm import constraint and the decision to use SSAO over N8AO.
+
+2026-02-07: Marked Milestone 4 complete; recorded physics collider/gravity decisions and the bundle-size impact.
 
 If Supabase migration fails, check the SQL syntax, fix it, and re-run `npx supabase db push`. Migrations are idempotent if written with `CREATE TABLE IF NOT EXISTS` and `CREATE OR REPLACE FUNCTION`.
 

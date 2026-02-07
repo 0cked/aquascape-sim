@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { Color, Float32BufferAttribute, PlaneGeometry } from 'three';
 
+import { CuboidCollider, RigidBody } from '@react-three/rapier';
+
 import { TANK, TANK_INNER } from '@/components/three/tank-constants';
 
 export function Substrate() {
@@ -27,15 +29,18 @@ export function Substrate() {
     return g;
   }, []);
 
+  const thickness = 0.2;
+
   return (
-    <mesh
-      geometry={geometry}
-      rotation={[-Math.PI / 2, 0, 0]}
-      position={[0, TANK.glass + 0.1, 0]}
-      receiveShadow
-    >
-      <meshStandardMaterial vertexColors roughness={1} metalness={0} />
-    </mesh>
+    <RigidBody type="fixed" colliders={false} position={[0, TANK.glass + 0.1, 0]}>
+      <CuboidCollider
+        args={[(TANK_INNER.width - 0.1) / 2, thickness / 2, (TANK_INNER.depth - 0.1) / 2]}
+        position={[0, -thickness / 2, 0]}
+        friction={1.2}
+      />
+      <mesh geometry={geometry} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <meshStandardMaterial vertexColors roughness={1} metalness={0} />
+      </mesh>
+    </RigidBody>
   );
 }
-
