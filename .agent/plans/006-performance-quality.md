@@ -16,7 +16,7 @@ This phase adds practical performance controls and guardrails. After this phase,
 - [x] (2026-02-07) Milestone 1: Quality store + UI menu with presets that affect DPR, shadows, and post-processing.
 - [x] (2026-02-07) Milestone 2: Adaptive performance fallback (auto-degrade on sustained low FPS; user can override).
 - [x] (2026-02-07) Milestone 3: Rendering optimizations for repeated assets (reduce cloning; add instanced static rendering where safe).
-- [ ] (2026-02-07) Milestone 4: Physics tuning (fixed bodies for settled objects; safer collider/body updates during transforms).
+- [x] (2026-02-07) Milestone 4: Physics tuning (fixed bodies for settled objects; safer collider/body updates during transforms).
 - [ ] (2026-02-07) Milestone 5: Regression guardrails (bundle size check script + CI `pnpm build` + documented thresholds).
 
 ## Surprises & Discoveries
@@ -42,6 +42,9 @@ This phase adds practical performance controls and guardrails. After this phase,
 - Decision: Instance matrices multiply by the source mesh's transform relative to the GLTF scene root.
   Rationale: Some GLTFs can include transforms on the mesh node or its parents; applying the base matrix avoids “instanced version is offset/rotated” bugs.
   Date/Author: 2026-02-07 / Codex.
+- Decision: Use Rapier `type="fixed"` for settled objects, switching to `kinematicPosition` only while actively transforming.
+  Rationale: Fixed bodies reduce steady-state simulation cost, while kinematic bodies preserve the ability to update transforms interactively without fighting the solver.
+  Date/Author: 2026-02-07 / Codex.
 
 ## Outcomes & Retrospective
 
@@ -50,6 +53,7 @@ This phase adds practical performance controls and guardrails. After this phase,
 (2026-02-07) Milestone 1 outcome: The editor toolbar now includes a “Quality” menu that switches between Low/Medium/High presets, controlling Canvas DPR, shadow enablement, and post-processing (including AO tiers).
 (2026-02-07) Milestone 2 outcome: The scene now uses Drei `PerformanceMonitor` to auto-lower quality on sustained performance decline, shows a dismissible on-screen notice, and disables further auto-degrades until the user re-enables the toggle.
 (2026-02-07) Milestone 3 outcome: Settled objects are now eligible for instanced rendering per asset type via `THREE.InstancedMesh`, and per-object GLTF rendering uses Drei `Clone` instead of manual deep-clone traversal. A dev-only “Stress” helper was added to populate the scene with many objects for performance testing.
+(2026-02-07) Milestone 4 outcome: Settled objects now use fixed Rapier bodies, while active gizmo transforms temporarily switch to kinematic bodies. Non-dynamic bodies correctly receive translation/rotation updates when transforms change.
 
 ## Context and Orientation
 
@@ -185,4 +189,4 @@ Automated validation:
 
 Plan Revision Note (2026-02-07):
 
-Updated the living sections to record Milestone 3 completion after adding instanced rendering for settled objects (where safe), switching per-object GLTF rendering to Drei `Clone`, and adding a small dev-only stress tool for manual performance validation.
+Updated the living sections to record Milestone 4 completion after switching settled Rapier bodies to fixed (with kinematic only during transforms) and ensuring non-dynamic bodies receive transform updates safely.

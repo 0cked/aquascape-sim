@@ -123,7 +123,11 @@ export function PlacedAsset({
   const renderModel = isDynamic || !instancedReady;
   const isActive = id === activeObjectId;
   const bodyType =
-    isDynamic && !(isActive && isTransforming) ? ('dynamic' as const) : ('kinematicPosition' as const);
+    isDynamic && !(isActive && isTransforming)
+      ? ('dynamic' as const)
+      : isActive && isTransforming
+        ? ('kinematicPosition' as const)
+        : ('fixed' as const);
   const rigidBodyRef = useRef<RapierRigidBody>(null);
 
   const size: Vec3 = [
@@ -135,7 +139,7 @@ export function PlacedAsset({
   useEffect(() => {
     const rb = rigidBodyRef.current;
     if (!rb) return;
-    if (bodyType !== 'kinematicPosition') return;
+    if (bodyType === 'dynamic') return;
 
     const q = new Quaternion().setFromEuler(new Euler(rotation[0], rotation[1], rotation[2], 'XYZ'));
     rb.setTranslation({ x: position[0], y: position[1], z: position[2] }, false);
