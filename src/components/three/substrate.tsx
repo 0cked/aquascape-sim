@@ -3,6 +3,7 @@ import { Mesh } from 'three';
 
 import { CuboidCollider, RigidBody } from '@react-three/rapier';
 
+import { ThreeErrorBoundary } from '@/components/three/three-error-boundary';
 import { TANK, TANK_INNER } from '@/components/three/tank-constants';
 import { useAquascapeGLTF } from '@/lib/assets/use-aquascape-gltf';
 
@@ -46,7 +47,9 @@ export function Substrate() {
         friction={1.2}
       />
       <Suspense fallback={<SubstrateFallback />}>
-        <SubstrateModel />
+        <ThreeErrorBoundary label="substrate" fallback={<SubstrateFallback />}>
+          <SubstrateModel />
+        </ThreeErrorBoundary>
       </Suspense>
     </RigidBody>
   );

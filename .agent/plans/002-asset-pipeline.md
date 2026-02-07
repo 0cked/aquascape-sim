@@ -15,7 +15,7 @@ The bootstrap editor proves that lighting, physics, and save/load work, but it u
 - [x] (2026-02-07) Milestone 2: Add an asset generation pipeline (script) and commit starter Draco-compressed `.glb` assets in `public/models/`.
 - [x] (2026-02-07) Milestone 3: Add a KTX2-compressed substrate texture and render it in the scene (via KTX2Loader in glTF pipeline).
 - [x] (2026-02-07) Milestone 4: Wire the editor asset catalog to include `modelUrl` + `thumbnailUrl`, render thumbnails in the sidebar, and spawn glTF models in the scene.
-- [ ] Milestone 5: Error handling and loading states for asset load failures; validation and deploy.
+- [x] (2026-02-07) Milestone 5: Error handling and loading states for asset load failures; validation and deploy.
 
 ## Surprises & Discoveries
 
@@ -38,6 +38,9 @@ The bootstrap editor proves that lighting, physics, and save/load work, but it u
 - Decision: Commit lightweight SVG thumbnails under `public/thumbnails/` and render them via `next/image` in the asset sidebar.
   Rationale: Thumbnails make the editor feel like a real asset browser, and using `next/image` keeps `next lint` clean without introducing remote image hosting.
   Date/Author: 2026-02-07 / Codex.
+- Decision: Add a small Three.js-compatible error boundary to isolate glTF load failures to the failing asset (instead of crashing the entire scene).
+  Rationale: Asset pipelines are brittle early on; isolating failures preserves the editor experience and makes failures obvious via per-asset fallback meshes.
+  Date/Author: 2026-02-07 / Codex.
 
 ## Outcomes & Retrospective
 
@@ -46,6 +49,9 @@ The bootstrap editor proves that lighting, physics, and save/load work, but it u
 - (2026-02-07) Milestone 2 outcome: The repo can generate and regenerate starter Draco-compressed assets via `pnpm assets:generate`, and `public/models/` now contains committed `.glb` models for rocks, plants, wood, and equipment.
 - (2026-02-07) Milestone 3 outcome: The scene substrate uses a glTF model with an embedded KTX2/BasisU texture (`KHR_texture_basisu`), proving the runtime decoders and `KTX2Loader` wiring work end-to-end.
 - (2026-02-07) Milestone 4 outcome: The editor sidebar shows thumbnails for each asset, and placing assets spawns the corresponding glTF models (with physics colliders) instead of primitives.
+- (2026-02-07) Milestone 5 outcome: Individual asset load failures no longer crash the whole scene (per-asset error boundaries + visible fallback meshes). All validation commands pass: `pnpm type-check && pnpm lint && pnpm test && pnpm build`.
+
+Retrospective (Phase 2 complete): This phase replaced all placeholder primitives with real glTF models, established a repeatable (procedural) asset pipeline, and proved Draco + KTX2 decoding in production. The editor now feels like an actual asset-based tool, and subsequent phases (transform tools, undo/redo, gallery) can build on stable asset URLs and thumbnails.
 
 ---
 
@@ -143,3 +149,4 @@ Plan Revision Notes:
 - (2026-02-07) Recorded Milestone 2 completion, and documented the `ktx` tooling requirement for KTX2 texture compression (discovered while implementing the generation pipeline).
 - (2026-02-07) Recorded Milestone 3 completion, including the first committed KTX2-compressed texture used in the running scene.
 - (2026-02-07) Recorded Milestone 4 completion, wiring the catalog + sidebar to thumbnails and swapping placed objects to glTF model rendering.
+- (2026-02-07) Recorded Milestone 5 completion, adding per-asset load error isolation and running full validation (type-check, lint, test, build).

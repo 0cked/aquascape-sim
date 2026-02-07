@@ -3,6 +3,7 @@ import type { ThreeEvent } from '@react-three/fiber';
 import { Suspense, useEffect, useMemo } from 'react';
 import { Mesh } from 'three';
 
+import { ThreeErrorBoundary } from '@/components/three/three-error-boundary';
 import { useAquascapeGLTF } from '@/lib/assets/use-aquascape-gltf';
 import type { AssetDefinition, PlaceableShape, Vec3 } from '@/types/scene';
 
@@ -91,6 +92,23 @@ function AssetFallback({
   );
 }
 
+function AssetErrorFallback({ shape, size }: { shape: PlaceableShape; size: Vec3 }) {
+  return (
+    <mesh castShadow receiveShadow>
+      <ShapeGeometry shape={shape} size={size} />
+      <meshStandardMaterial
+        color="#ef4444"
+        emissive="#ef4444"
+        emissiveIntensity={0.25}
+        roughness={0.9}
+        metalness={0}
+        transparent
+        opacity={0.7}
+      />
+    </mesh>
+  );
+}
+
 export function PlacedAsset({
   asset,
   position,
@@ -129,11 +147,19 @@ export function PlacedAsset({
           </mesh>
         ) : null}
 
-        <Suspense fallback={<AssetFallback shape={asset.shape} size={size} color={asset.color} selected={selected} />}>
-          <AssetModel url={asset.modelUrl} scale={scale} />
+        <Suspense
+          fallback={
+            <AssetFallback shape={asset.shape} size={size} color={asset.color} selected={selected} />
+          }
+        >
+          <ThreeErrorBoundary
+            label={asset.type}
+            fallback={<AssetErrorFallback shape={asset.shape} size={size} />}
+          >
+            <AssetModel url={asset.modelUrl} scale={scale} />
+          </ThreeErrorBoundary>
         </Suspense>
       </group>
     </RigidBody>
   );
 }
-
