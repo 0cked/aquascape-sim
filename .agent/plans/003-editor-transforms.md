@@ -12,7 +12,7 @@ AquascapeSim currently supports placing assets and selecting a single object, bu
 ## Progress
 
 - [x] (2026-02-07) Milestone 1: Upgrade the editor selection model (multi-select + active selection) and update the toolbar/scene to match.
-- [ ] (2026-02-07) Milestone 2: Add a right-side properties panel that edits position/rotation/scale numerically and supports duplicate/delete.
+- [x] (2026-02-07) Milestone 2: Add a right-side properties panel that edits position/rotation/scale numerically and supports duplicate/delete.
 - [ ] (2026-02-07) Milestone 3: Add transform mode state + UI (translate/rotate/scale) with keyboard shortcuts.
 - [ ] (2026-02-07) Milestone 4: Integrate `TransformControls` (gizmo) with Rapier bodies, snapping/clamping rules, and “don’t crash the scene” ergonomics.
 - [ ] (2026-02-07) Milestone 5: Validation, regression tests, and deploy polish.
@@ -31,12 +31,16 @@ AquascapeSim currently supports placing assets and selecting a single object, bu
 - Decision: Shift-click toggles selection membership; Delete removes the full selection (not just the active object).
   Rationale: This is the smallest multi-select behavior that feels like an editor and enables batch delete/duplicate without additional UI.
   Date/Author: 2026-02-07 / Codex.
+- Decision: Duplicate operates on the full selection and sets the new duplicates as the new selection (active = last duplicated).
+  Rationale: This matches common editor behavior and makes repeated duplicate-and-tweak workflows fast.
+  Date/Author: 2026-02-07 / Codex.
 
 ## Outcomes & Retrospective
 
 (To be updated at milestone completions.)
 
 - (2026-02-07) Milestone 1 outcome: The editor supports multi-select (Shift-click) with an active selection, and the toolbar/scene highlight state reflect the selection model. Store tests updated and still passing.
+- (2026-02-07) Milestone 2 outcome: A right-side properties panel is available in `/editor`, showing the active selection’s transform values (position/rotation/scale) and enabling duplicate/delete actions for the current selection.
 
 ---
 
@@ -197,6 +201,7 @@ All changes are additive or local refactors. If transform controls destabilize t
 
 ---
 
-Plan Revision Note (2026-02-07):
+Plan Revision Notes:
 
-Updated the living sections to record Milestone 1 completion and logged the selection semantics decisions, since subsequent milestones build on this selection model.
+- (2026-02-07) Recorded Milestone 1 completion and logged the selection semantics decisions, since subsequent milestones build on this selection model.
+- (2026-02-07) Recorded Milestone 2 completion after adding the properties panel UI and selection duplicate/delete behavior.

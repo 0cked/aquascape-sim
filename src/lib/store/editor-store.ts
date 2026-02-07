@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 
 import type { EditorMode, PlacedObject } from '@/types/scene';
+import { newId } from '@/lib/utils/id';
 
 export type EditorStore = {
   mode: EditorMode;
@@ -17,6 +18,7 @@ export type EditorStore = {
   addObject: (object: PlacedObject) => void;
   removeObject: (id: string) => void;
   removeObjects: (ids: string[]) => void;
+  duplicateObjects: (ids: string[]) => void;
   setObjects: (objects: PlacedObject[]) => void;
 
   selectObject: (id: string | null, opts?: { additive?: boolean }) => void;
@@ -89,6 +91,31 @@ export const useEditorStore = create<EditorStore>()(
         if (s.activeObjectId && toRemove.has(s.activeObjectId)) {
           s.activeObjectId = s.selectedObjectIds.at(-1) ?? null;
         }
+      });
+    },
+
+    duplicateObjects: (ids) => {
+      set((s) => {
+        const toDuplicate = new Set(ids);
+        const copies: PlacedObject[] = [];
+
+        for (const obj of s.objects) {
+          if (!toDuplicate.has(obj.id)) continue;
+
+          copies.push({
+            ...obj,
+            id: newId(),
+            position: [obj.position[0] + 0.25, obj.position[1], obj.position[2] + 0.25],
+          });
+        }
+
+        if (copies.length === 0) return;
+        s.objects.push(...copies);
+
+        s.selectedObjectIds = copies.map((o) => o.id);
+        s.activeObjectId = copies.at(-1)?.id ?? null;
+        s.mode = 'select';
+        s.selectedAssetType = null;
       });
     },
 
