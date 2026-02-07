@@ -52,4 +52,42 @@ describe('editor-store', () => {
     expect(s.selectedObjectIds).toEqual([]);
     expect(s.activeObjectId).toBeNull();
   });
+
+  it('duplicates the selection and selects the duplicates', () => {
+    useEditorStore.getState().addObject({
+      id: 'obj_1',
+      assetType: 'rock_small',
+      position: [0, 1, 0],
+      rotation: [0, 0, 0],
+      scale: [1, 1, 1],
+    });
+    useEditorStore.getState().addObject({
+      id: 'obj_2',
+      assetType: 'rock_small',
+      position: [1, 1, 1],
+      rotation: [0, 0, 0],
+      scale: [1, 1, 1],
+    });
+
+    useEditorStore.getState().selectObject('obj_1');
+    useEditorStore.getState().selectObject('obj_2', { additive: true });
+
+    const before = useEditorStore.getState();
+    const beforeIds = new Set(before.objects.map((o) => o.id));
+    expect(before.selectedObjectIds).toEqual(['obj_1', 'obj_2']);
+
+    useEditorStore.getState().duplicateObjects(before.selectedObjectIds);
+    const after = useEditorStore.getState();
+
+    expect(after.objects).toHaveLength(4);
+    expect(new Set(after.objects.map((o) => o.id)).size).toBe(4);
+
+    expect(after.selectedObjectIds).toHaveLength(2);
+    expect(after.activeObjectId).toBe(after.selectedObjectIds[1]);
+
+    for (const id of after.selectedObjectIds) {
+      expect(beforeIds.has(id)).toBe(false);
+      expect(after.dynamicObjectIds[id]).toBe(true);
+    }
+  });
 });

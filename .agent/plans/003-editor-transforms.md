@@ -15,7 +15,7 @@ AquascapeSim currently supports placing assets and selecting a single object, bu
 - [x] (2026-02-07) Milestone 2: Add a right-side properties panel that edits position/rotation/scale numerically and supports duplicate/delete.
 - [x] (2026-02-07) Milestone 3: Add transform mode state + UI (translate/rotate/scale) with keyboard shortcuts.
 - [x] (2026-02-07) Milestone 4: Integrate `TransformControls` (gizmo) with Rapier bodies, snapping/clamping rules, and “don’t crash the scene” ergonomics.
-- [ ] (2026-02-07) Milestone 5: Validation, regression tests, and deploy polish.
+- [x] (2026-02-07) Milestone 5: Validation, regression tests, and deploy polish.
 
 ## Surprises & Discoveries
 
@@ -53,6 +53,9 @@ AquascapeSim currently supports placing assets and selecting a single object, bu
 - (2026-02-07) Milestone 2 outcome: A right-side properties panel is available in `/editor`, showing the active selection’s transform values (position/rotation/scale) and enabling duplicate/delete actions for the current selection.
 - (2026-02-07) Milestone 3 outcome: The editor has a persistent transform mode state (`translate`/`rotate`/`scale`) controllable from the toolbar and via W/E/R hotkeys.
 - (2026-02-07) Milestone 4 outcome: A transform gizmo is available for the active selection in `/editor` (translate/rotate/scale), orbit controls disable while dragging, transforms are clamped inside the tank bounds, and transforms update Rapier kinematic bodies so numeric edits and gizmo drags move objects reliably.
+- (2026-02-07) Milestone 5 outcome: Added store regression tests for duplicate behavior and ran full validation (`pnpm type-check && pnpm lint && pnpm test && pnpm build`) successfully.
+
+Retrospective (Phase 3 complete): AquascapeSim now has the baseline “editor loop”: multi-select, active selection, a properties panel for exact transforms, and a transform gizmo with sensible constraints. This substantially reduces friction when iterating on an aquascape and sets up Phase 4 (undo/redo) to capture meaningful user actions (place, delete, duplicate, transform) as commands.
 
 ---
 
@@ -213,3 +216,4 @@ Plan Revision Notes:
 - (2026-02-07) Recorded Milestone 2 completion after adding the properties panel UI and selection duplicate/delete behavior.
 - (2026-02-07) Recorded Milestone 3 completion after adding transform mode state, toolbar UI, and W/E/R keyboard shortcuts.
 - (2026-02-07) Recorded Milestone 4 completion after integrating `TransformControls` with clamping, adding dynamic-to-kinematic settling, and syncing kinematic bodies to store transforms.
+- (2026-02-07) Recorded Milestone 5 completion after adding regression tests and running full validation + build.
