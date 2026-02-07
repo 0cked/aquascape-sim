@@ -15,12 +15,14 @@ Saving builds is useful, but without thumbnails and sharing, it is hard to brows
 - [x] (2026-02-07) Milestone 2: Thumbnail capture on save and upload to Supabase Storage via a server route.
 - [x] (2026-02-07) Milestone 3: `/gallery` page listing public builds with thumbnails and pagination.
 - [x] (2026-02-07) Milestone 4: Share/open flow: `/editor?build=<id>` loads builds (public or owned) and clears undo history.
-- [ ] (2026-02-07) Milestone 5: Likes UI + validation + deploy.
+- [x] (2026-02-07) Milestone 5: Likes UI + validation + deploy.
 
 ## Surprises & Discoveries
 
 - Observation: Capturing a WebGL canvas thumbnail reliably required `preserveDrawingBuffer: true` on the R3F canvas, and full-size captures can be unexpectedly large on high-DPI screens.
   Evidence: Without `preserveDrawingBuffer`, `canvas.toBlob(...)` can produce empty/blank output depending on browser/GPU. Full-size captures at editor DPR produced multi-megabyte images before downscaling.
+- Observation: Next.js 15’s `PageProps` typing expects `searchParams` to be a `Promise`, and `next build` fails if the page component signature types it as a plain object.
+  Evidence: `pnpm build` failed with `Type error: ... searchParams ... missing properties from type 'Promise<any>'` until `searchParams?: Promise<...>` was used.
 
 ## Decision Log
 
@@ -41,6 +43,12 @@ Saving builds is useful, but without thumbnails and sharing, it is hard to brows
 - Decision: Load shared builds client-side in the editor via `useSearchParams()` + Supabase browser client.
   Rationale: The editor is already client-rendered for 3D; using the browser client avoids server-side query param plumbing and ensures RLS behaves consistently (public builds readable by anyone, private builds readable only by owner).
   Date/Author: 2026-02-07 / Codex.
+- Decision: Implement likes as a client-side grid that batch-fetches `build_likes` for the visible page of build ids.
+  Rationale: Avoids an N+1 fetch pattern while keeping the main `/gallery` listing server-rendered and simple.
+  Date/Author: 2026-02-07 / Codex.
+- Decision: Pass stable `authorLabel` and `dateLabel` strings from the server to the client grid.
+  Rationale: Avoids locale/timezone-dependent formatting during SSR that can cause hydration mismatches.
+  Date/Author: 2026-02-07 / Codex.
 
 ## Outcomes & Retrospective
 
@@ -50,12 +58,14 @@ Saving builds is useful, but without thumbnails and sharing, it is hard to brows
 - (2026-02-07) Milestone 2 outcome: Saving a build captures a downscaled WebP thumbnail from the 3D canvas and uploads it via `POST /api/thumbnails`, storing the resulting `thumbnail_url` on the build record.
 - (2026-02-07) Milestone 3 outcome: `/gallery` lists public builds with thumbnails, author info, and simple pagination via `?page=`, with cards that open builds in the editor.
 - (2026-02-07) Milestone 4 outcome: Visiting `/editor?build=<id>` fetches the build (if public or owned), loads its `scene_data` into the editor (clearing selection + undo history via `setObjects(...)`), and shows a small status banner.
+- (2026-02-07) Milestone 5 outcome: Gallery cards show like counts and (when signed in) allow toggling like/unlike. Full validation passed: `pnpm type-check && pnpm lint && pnpm test && pnpm build`.
+- (2026-02-07) Plan retrospective: AquascapeSim now has a complete “publish and browse” loop for builds (thumbnail, public toggle, gallery listing, share links, likes). Remaining gaps are mostly UX (explicit share button, better error states, more metadata) rather than missing core plumbing.
 
 ---
 
 Plan Revision Note (2026-02-07):
 
-Updated the living sections to record Milestone 4 completion (share/open flow), including a decision to implement query-param build loading as a small client component in the editor page.
+Updated the living sections to record Milestone 5 completion (likes UI + full validation), including the Next.js 15 `searchParams` typing fix required for `pnpm build` to pass.
 
 ---
 
