@@ -157,3 +157,69 @@ Prefer additive code changes followed by subtractions that keep tests passing. P
 If you follow the guidance above, a single, stateless agent — or a human novice — can read your ExecPlan from top to bottom and produce a working, observable result. That is the bar: SELF-CONTAINED, SELF-SUFFICIENT, NOVICE-GUIDING, OUTCOME-FOCUSED.
 
 When you revise a plan, you must ensure your changes are comprehensively reflected across all sections, including the living document sections, and you must write a note at the bottom of the plan describing the change and the reason why. ExecPlans must describe not just the what but the why for almost everything.
+
+## AquascapeSim Phase Roadmap (ExecPlan Index)
+
+This repository uses ExecPlans not just for "one-off" features, but also as the main way we sequence larger phases of work. After `.agent/plans/001-bootstrap.md` (the MVP bootstrap), the next phases below are the intended path to take AquascapeSim from "working prototype" to "serious editor". Each phase should be captured as a new ExecPlan file under `.agent/plans/` and written so a novice can execute it end-to-end.
+
+When you start one of these phases, create the referenced plan file, keep it self-contained, and update this index when the plan is created, renamed, or completed.
+
+### Phase 2: Real Assets and Asset Pipeline
+
+File: `.agent/plans/002-asset-pipeline.md`
+
+Goal: Replace placeholder primitives with real glTF 2.0 assets and compressed textures, while keeping load times and GPU memory in budget.
+
+Work should include: a reusable asset loader (`DRACOLoader`, `KTX2Loader`/BasisU) with caching; starter `.glb` assets under `public/models/`; at least one HDRI in `public/textures/`; and wiring the editor asset sidebar to show thumbnails and spawn actual models.
+
+Acceptance should include: placing a rock/plant spawns a glTF model; textures use KTX2; scene still runs smoothly; no console errors on asset load failures (user-friendly errors instead).
+
+### Phase 3: Transform Tools and Properties Panel
+
+File: `.agent/plans/003-editor-transforms.md`
+
+Goal: Turn the editor into an actual editor: select objects, translate/rotate/scale them, edit numeric properties, and duplicate/delete reliably.
+
+Work should include: a selection model (single and multi-select), `TransformControls` integration, snapping rules (substrate, tank bounds), and a right-side properties panel that edits the selected object(s). Ensure physics colliders update correctly when transforms change.
+
+Acceptance should include: user can place an asset, select it, move/rotate/scale it with a gizmo, see values update in the panel, and save/load preserves all transforms.
+
+### Phase 4: Undo/Redo Command System
+
+File: `.agent/plans/004-undo-redo.md`
+
+Goal: Make all key editor actions reversible so users can iterate confidently.
+
+Work should include: an undo/redo stack built around explicit commands (place, delete, transform, duplicate), keyboard shortcuts (Cmd/Ctrl+Z, Shift+Cmd/Ctrl+Z), and careful state serialization so saving does not include the entire history.
+
+Acceptance should include: a scripted set of actions (place 3 objects, move 1, delete 1) can be undone and redone step-by-step with no drift.
+
+### Phase 5: Thumbnails, Sharing, and Gallery
+
+File: `.agent/plans/005-gallery-sharing.md`
+
+Goal: Make builds shareable and browsable: thumbnails, public links, and a community gallery.
+
+Work should include: capturing a thumbnail from the canvas, storing it in Supabase Storage (or R2 if needed), extending `builds` rows with `thumbnail_url`, implementing `/gallery` with pagination, and adding basic social signals (likes). Update RLS policies accordingly.
+
+Acceptance should include: a user saves a build, sees a thumbnail, toggles it public, and the build appears in `/gallery` for other users to view.
+
+### Phase 6: Performance, Quality Settings, and Regression Guardrails
+
+File: `.agent/plans/006-performance-quality.md`
+
+Goal: Keep 60 FPS and predictable load times as scenes grow.
+
+Work should include: instancing for repeated assets, LOD selection for heavy meshes, physics sleeping/tuning, "quality" toggles (post-processing on/off, AO quality tiers), and regression guardrails (basic performance measurement script and CI checks that catch accidental bundle blow-ups).
+
+Acceptance should include: a scene with 50-100 objects stays interactive on an integrated GPU laptop, and the editor remains usable on mobile Safari/Chrome.
+
+### Phase 7: Rendering and Simulation Polish
+
+File: `.agent/plans/007-rendering-polish.md`
+
+Goal: Improve realism and "aquarium vibe" without destroying performance.
+
+Work should include: improved water shading (refraction/absorption), optional volumetric fog/light shafts, better caustics (even if faked), and safer error handling for WebGL context loss.
+
+Acceptance should include: visible quality improvements compared to Phase 6, with the ability to toggle expensive effects off.
