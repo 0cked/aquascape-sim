@@ -3,9 +3,10 @@
 import { OrbitControls } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import { useMemo } from 'react';
-import { ACESFilmicToneMapping, Color, PCFSoftShadowMap, SRGBColorSpace } from 'three';
+import { Color, NoToneMapping, PCFSoftShadowMap, SRGBColorSpace } from 'three';
 
 import { AquariumTank } from '@/components/three/aquarium-tank';
+import { Effects } from '@/components/three/effects';
 import { Lighting } from '@/components/three/lighting';
 import { Substrate } from '@/components/three/substrate';
 import { Water } from '@/components/three/water';
@@ -26,7 +27,8 @@ export function Scene() {
       onCreated={({ gl, scene }) => {
         gl.shadowMap.enabled = true;
         gl.shadowMap.type = PCFSoftShadowMap;
-        gl.toneMapping = ACESFilmicToneMapping;
+        // Post-processing owns tone mapping to avoid double application.
+        gl.toneMapping = NoToneMapping;
         gl.outputColorSpace = SRGBColorSpace;
 
         scene.background = background;
@@ -44,6 +46,8 @@ export function Scene() {
       <Substrate />
       <Water />
 
+      <Effects />
+
       <OrbitControls
         makeDefault
         enableDamping
@@ -56,4 +60,3 @@ export function Scene() {
     </Canvas>
   );
 }
-

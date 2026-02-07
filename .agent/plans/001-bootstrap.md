@@ -14,7 +14,7 @@ AquascapeSim is a browser-based 3D aquarium aquascaping simulator. After this bo
 - [x] (2026-02-07) Added baseline repo hygiene: `.gitignore` includes `.secrets/` and `.env*.local`, created `.env.local.example`, and installed the core 3D/physics/state/auth dependencies.
 - [x] (2026-02-07) Milestone 1: Repository creation, tooling setup, and first deploy (GitHub repo created; Vercel project linked; env vars set; production deploy live at `https://aquascape-sim.vercel.app`).
 - [x] (2026-02-07) Milestone 2: 3D scene foundation — tank, water, substrate, lighting, camera
-- [ ] Milestone 3: Post-processing pipeline — bloom, SSAO, tone mapping
+- [x] (2026-02-07) Milestone 3: Post-processing pipeline — bloom, SSAO, tone mapping
 - [ ] Milestone 4: Physics integration — Rapier, gravity, collisions, surface placement
 - [ ] Milestone 5: Editor UI — toolbar, sidebar, object placement workflow
 - [ ] Milestone 6: Supabase integration — auth, database schema, save/load builds
@@ -37,6 +37,9 @@ AquascapeSim is a browser-based 3D aquarium aquascaping simulator. After this bo
 - Observation: WebGPU renderer setup is not a drop-in change for the current R3F + postprocessing stack and would require additional integration work.
   Evidence: No stable `WebGPURenderer` configuration path was used in this milestone; the editor uses the default WebGL renderer created by R3F.
 
+- Observation: With pnpm's strict dependency isolation, importing `postprocessing` directly from app code failed unless it was a direct dependency (even though `@react-three/postprocessing` depends on it).
+  Evidence: `error TS2307: Cannot find module 'postprocessing' or its corresponding type declarations.`
+
 ## Decision Log
 
 - Decision: Scaffold the Next.js app in a temporary directory and sync it into the repo root instead of running `create-next-app` in-place.
@@ -57,6 +60,10 @@ AquascapeSim is a browser-based 3D aquarium aquascaping simulator. After this bo
 
 - Decision: Use R3F's default WebGL renderer for the editor canvas in Milestone 2 (no WebGPU attempt).
   Rationale: WebGPU in Three.js is not currently a low-risk swap-in for R3F + `@react-three/postprocessing`; bootstrap prioritizes a working editor foundation over renderer experimentation.
+  Date/Author: 2026-02-07 / Codex.
+
+- Decision: Use `SSAO` from `@react-three/postprocessing` (with `EffectComposer enableNormalPass`) instead of `N8AO`.
+  Rationale: The current `N8AO` wrapper includes an explicit note about memory leaks without upstream disposal; bootstrap favors stable lifecycle/disposal behavior.
   Date/Author: 2026-02-07 / Codex.
 
 - Decision: Use `@react-three/rapier` instead of raw Rapier bindings.
@@ -89,6 +96,8 @@ AquascapeSim is a browser-based 3D aquarium aquascaping simulator. After this bo
   The GitHub repo is `0cked/aquascape-sim`, the Vercel project is linked, and the production URL is `https://aquascape-sim.vercel.app`. The landing page renders and the `/editor` route exists (placeholder).
 
 - Milestone 2 (2026-02-07): `/editor` renders an R3F scene with a glass tank, animated water surface, substrate plane, environment reflections, and orbit camera controls.
+
+- Milestone 3 (2026-02-07): `/editor` has a post-processing stack (bloom, SSAO, vignette, and filmic tone mapping via `ToneMapping`) that makes the scene noticeably more cinematic.
 
 ---
 
@@ -565,6 +574,8 @@ If `pnpm install` fails, delete `node_modules/` and `pnpm-lock.yaml` and try aga
 2026-02-07: Marked Milestone 1 complete and recorded the deployed production URL; added Vercel env-var sensitivity discovery and the corresponding implementation decision.
 
 2026-02-07: Marked Milestone 2 complete and recorded the WebGL renderer decision.
+
+2026-02-07: Marked Milestone 3 complete; recorded the pnpm import constraint and the decision to use SSAO over N8AO.
 
 If Supabase migration fails, check the SQL syntax, fix it, and re-run `npx supabase db push`. Migrations are idempotent if written with `CREATE TABLE IF NOT EXISTS` and `CREATE OR REPLACE FUNCTION`.
 
