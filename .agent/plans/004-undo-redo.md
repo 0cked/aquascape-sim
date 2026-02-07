@@ -12,7 +12,7 @@ Aquascaping is iterative. Without undo/redo, users either “play it safe” or 
 ## Progress
 
 - [x] (2026-02-07) Milestone 1: Add a command-based history model to the editor store (undo/redo stacks) without changing UI behavior yet.
-- [ ] (2026-02-07) Milestone 2: Convert editor actions (place, delete, duplicate) to issue commands and record history.
+- [x] (2026-02-07) Milestone 2: Convert editor actions (place, delete, duplicate) to issue commands and record history.
 - [ ] (2026-02-07) Milestone 3: Record transform edits as commands (gizmo drag end and properties edits) without spamming history during drag.
 - [ ] (2026-02-07) Milestone 4: Keyboard shortcuts + toolbar buttons for undo/redo, and clear history on load/reset.
 - [ ] (2026-02-07) Milestone 5: Tests, validation, and deploy.
@@ -28,12 +28,16 @@ Aquascaping is iterative. Without undo/redo, users either “play it safe” or 
 - Decision: Implement undo/redo as explicit commands (`do`/`undo`) stored in bounded stacks (`undoStack`/`redoStack`) inside the editor store.
   Rationale: Commands make it easier to ensure reversibility for complex multi-field edits (transforms, duplicate/delete) without drift, and they provide a natural place to capture “before/after” snapshots.
   Date/Author: 2026-02-07 / Codex.
+- Decision: Keep the existing store API (`addObject/removeObjects/duplicateObjects`) but implement them as thin wrappers around `executeCommand(...)`.
+  Rationale: This minimizes UI churn and allows migrating actions to commands incrementally while keeping behavior stable at each milestone.
+  Date/Author: 2026-02-07 / Codex.
 
 ## Outcomes & Retrospective
 
 (To be updated at milestone completions.)
 
 - (2026-02-07) Milestone 1 outcome: The editor store now contains undo/redo stacks plus `executeCommand/undo/redo/clearHistory` actions, with no behavior changes yet. All tests still pass.
+- (2026-02-07) Milestone 2 outcome: Place/delete/duplicate now go through `executeCommand(...)` and produce undoable history entries, while preserving the existing editor UI behavior.
 
 ---
 
@@ -168,4 +172,4 @@ Undo/redo is an internal refactor plus additive UI. If the command refactor intr
 
 Plan Revision Note (2026-02-07):
 
-Updated the living sections to record Milestone 1 completion after adding the command history model to the editor store.
+Updated the living sections to record Milestone 2 completion after converting place/delete/duplicate actions to command execution.

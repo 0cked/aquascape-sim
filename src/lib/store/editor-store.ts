@@ -49,7 +49,7 @@ export type EditorStore = {
 };
 
 export const useEditorStore = create<EditorStore>()(
-  immer((set) => ({
+  immer((set, get) => ({
     mode: 'select',
     selectedAssetType: null,
     objects: [],
@@ -156,69 +156,150 @@ export const useEditorStore = create<EditorStore>()(
     },
 
     addObject: (object) => {
-      set((s) => {
-        s.objects.push(object);
-        s.selectedObjectIds = [object.id];
-        s.activeObjectId = object.id;
-        s.mode = 'select';
-        s.selectedAssetType = null;
-        s.isTransforming = false;
-        s.dynamicObjectIds[object.id] = true;
-      });
+      let prevSelection: string[] = [];
+      let prevActive: string | null = null;
+      let prevMode: EditorMode = 'select';
+      let prevSelectedAssetType: string | null = null;
+
+      const cmd: EditorCommand = {
+        name: `place:${object.assetType}`,
+        do: (s) => {
+          prevSelection = [...s.selectedObjectIds];
+          prevActive = s.activeObjectId;
+          prevMode = s.mode;
+          prevSelectedAssetType = s.selectedAssetType;
+
+          s.objects.push(object);
+          s.selectedObjectIds = [object.id];
+          s.activeObjectId = object.id;
+          s.mode = 'select';
+          s.selectedAssetType = null;
+          s.isTransforming = false;
+          s.dynamicObjectIds[object.id] = true;
+        },
+        undo: (s) => {
+          s.objects = s.objects.filter((o) => o.id !== object.id);
+          s.selectedObjectIds = prevSelection;
+          s.activeObjectId = prevActive;
+          s.mode = prevMode;
+          s.selectedAssetType = prevSelectedAssetType;
+          s.isTransforming = false;
+          delete s.dynamicObjectIds[object.id];
+        },
+      };
+
+      get().executeCommand(cmd);
     },
 
     removeObject: (id) => {
-      set((s) => {
-        s.objects = s.objects.filter((o) => o.id !== id);
-        s.selectedObjectIds = s.selectedObjectIds.filter((selId) => selId !== id);
-        if (s.activeObjectId === id) {
-          s.activeObjectId = s.selectedObjectIds.at(-1) ?? null;
-        }
-        delete s.dynamicObjectIds[id];
-      });
+      get().removeObjects([id]);
     },
 
     removeObjects: (ids) => {
-      set((s) => {
-        const toRemove = new Set(ids);
-        s.objects = s.objects.filter((o) => !toRemove.has(o.id));
+      const toRemove = Array.from(new Set(ids));
+      if (toRemove.length === 0) return;
 
-        s.selectedObjectIds = s.selectedObjectIds.filter((selId) => !toRemove.has(selId));
-        if (s.activeObjectId && toRemove.has(s.activeObjectId)) {
-          s.activeObjectId = s.selectedObjectIds.at(-1) ?? null;
-        }
+      let prevSelection: string[] = [];
+      let prevActive: string | null = null;
+      let removed: Array<{ index: number; object: PlacedObject; wasDynamic: boolean }> = [];
 
-        ids.forEach((id) => {
-          delete s.dynamicObjectIds[id];
-        });
-      });
+      const cmd: EditorCommand = {
+        name: `delete:${toRemove.length}`,
+        do: (s) => {
+          prevSelection = [...s.selectedObjectIds];
+          prevActive = s.activeObjectId;
+
+          const removeSet = new Set(toRemove);
+          removed = [];
+          for (let i = 0; i < s.objects.length; i += 1) {
+            const obj = s.objects[i];
+            if (!obj) continue;
+            if (!removeSet.has(obj.id)) continue;
+            removed.push({ index: i, object: obj, wasDynamic: s.dynamicObjectIds[obj.id] === true });
+          }
+
+          s.objects = s.objects.filter((o) => !removeSet.has(o.id));
+          s.selectedObjectIds = s.selectedObjectIds.filter((selId) => !removeSet.has(selId));
+          if (s.activeObjectId && removeSet.has(s.activeObjectId)) {
+            s.activeObjectId = s.selectedObjectIds.at(-1) ?? null;
+          }
+          toRemove.forEach((id) => {
+            delete s.dynamicObjectIds[id];
+          });
+          s.isTransforming = false;
+        },
+        undo: (s) => {
+          const sorted = [...removed].sort((a, b) => a.index - b.index);
+          for (const entry of sorted) {
+            s.objects.splice(entry.index, 0, entry.object);
+            if (entry.wasDynamic) {
+              s.dynamicObjectIds[entry.object.id] = true;
+            }
+          }
+          s.selectedObjectIds = prevSelection;
+          s.activeObjectId = prevActive;
+          s.isTransforming = false;
+        },
+      };
+
+      get().executeCommand(cmd);
     },
 
     duplicateObjects: (ids) => {
-      set((s) => {
-        const toDuplicate = new Set(ids);
-        const copies: PlacedObject[] = [];
+      const state = get();
+      const toDuplicate = new Set(ids);
+      const copies: PlacedObject[] = [];
 
-        for (const obj of s.objects) {
-          if (!toDuplicate.has(obj.id)) continue;
+      for (const obj of state.objects) {
+        if (!toDuplicate.has(obj.id)) continue;
+        copies.push({
+          ...obj,
+          id: newId(),
+          position: [obj.position[0] + 0.25, obj.position[1], obj.position[2] + 0.25],
+        });
+      }
 
-          const id = newId();
-          copies.push({
-            ...obj,
-            id,
-            position: [obj.position[0] + 0.25, obj.position[1], obj.position[2] + 0.25],
-          });
-          s.dynamicObjectIds[id] = true;
-        }
+      if (copies.length === 0) return;
 
-        if (copies.length === 0) return;
-        s.objects.push(...copies);
+      let prevSelection: string[] = [];
+      let prevActive: string | null = null;
+      let prevMode: EditorMode = 'select';
+      let prevSelectedAssetType: string | null = null;
 
-        s.selectedObjectIds = copies.map((o) => o.id);
-        s.activeObjectId = copies.at(-1)?.id ?? null;
-        s.mode = 'select';
-        s.selectedAssetType = null;
-      });
+      const cmd: EditorCommand = {
+        name: `duplicate:${copies.length}`,
+        do: (s) => {
+          prevSelection = [...s.selectedObjectIds];
+          prevActive = s.activeObjectId;
+          prevMode = s.mode;
+          prevSelectedAssetType = s.selectedAssetType;
+
+          s.objects.push(...copies);
+          for (const obj of copies) {
+            s.dynamicObjectIds[obj.id] = true;
+          }
+
+          s.selectedObjectIds = copies.map((o) => o.id);
+          s.activeObjectId = copies.at(-1)?.id ?? null;
+          s.mode = 'select';
+          s.selectedAssetType = null;
+          s.isTransforming = false;
+        },
+        undo: (s) => {
+          const copySet = new Set(copies.map((o) => o.id));
+          s.objects = s.objects.filter((o) => !copySet.has(o.id));
+          for (const obj of copies) {
+            delete s.dynamicObjectIds[obj.id];
+          }
+          s.selectedObjectIds = prevSelection;
+          s.activeObjectId = prevActive;
+          s.mode = prevMode;
+          s.selectedAssetType = prevSelectedAssetType;
+          s.isTransforming = false;
+        },
+      };
+
+      get().executeCommand(cmd);
     },
 
     setObjects: (objects) => {
