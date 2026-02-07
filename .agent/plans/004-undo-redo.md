@@ -14,7 +14,7 @@ Aquascaping is iterative. Without undo/redo, users either “play it safe” or 
 - [x] (2026-02-07) Milestone 1: Add a command-based history model to the editor store (undo/redo stacks) without changing UI behavior yet.
 - [x] (2026-02-07) Milestone 2: Convert editor actions (place, delete, duplicate) to issue commands and record history.
 - [x] (2026-02-07) Milestone 3: Record transform edits as commands (gizmo drag end and properties edits) without spamming history during drag.
-- [ ] (2026-02-07) Milestone 4: Keyboard shortcuts + toolbar buttons for undo/redo, and clear history on load/reset.
+- [x] (2026-02-07) Milestone 4: Keyboard shortcuts + toolbar buttons for undo/redo, and clear history on load/reset.
 - [ ] (2026-02-07) Milestone 5: Tests, validation, and deploy.
 
 ## Surprises & Discoveries
@@ -34,6 +34,9 @@ Aquascaping is iterative. Without undo/redo, users either “play it safe” or 
 - Decision: Add `commitTransform(id, before, after, label)` to record a single transform command at “commit points” (gizmo drag end and input blur) while allowing live store updates during drag.
   Rationale: Users need live visual feedback while dragging, but history must remain readable and not contain hundreds of micro-steps. Capturing before/after at commit time prevents drift and keeps undo intuitive.
   Date/Author: 2026-02-07 / Codex.
+- Decision: Implement standard undo/redo shortcuts (Cmd/Ctrl+Z, Shift+Cmd/Ctrl+Z, Cmd/Ctrl+Y) and surface Undo/Redo buttons in the toolbar.
+  Rationale: Users expect editor-grade keybindings; the toolbar buttons also make undo/redo discoverable and help confirm whether history is being recorded.
+  Date/Author: 2026-02-07 / Codex.
 
 ## Outcomes & Retrospective
 
@@ -42,6 +45,7 @@ Aquascaping is iterative. Without undo/redo, users either “play it safe” or 
 - (2026-02-07) Milestone 1 outcome: The editor store now contains undo/redo stacks plus `executeCommand/undo/redo/clearHistory` actions, with no behavior changes yet. All tests still pass.
 - (2026-02-07) Milestone 2 outcome: Place/delete/duplicate now go through `executeCommand(...)` and produce undoable history entries, while preserving the existing editor UI behavior.
 - (2026-02-07) Milestone 3 outcome: Gizmo transforms and properties panel edits now push one undoable transform command per completed edit (drag end / input blur), instead of spamming the history during live interaction.
+- (2026-02-07) Milestone 4 outcome: Undo/redo is accessible via Cmd/Ctrl+Z and Shift+Cmd/Ctrl+Z (plus Ctrl/Cmd+Y), and Undo/Redo toolbar buttons reflect stack availability. Loading a build clears history to avoid undoing across unrelated scenes.
 
 ---
 
@@ -179,3 +183,4 @@ Plan Revision Notes:
 - (2026-02-07) Recorded Milestone 1 completion after adding the command history model to the editor store.
 - (2026-02-07) Recorded Milestone 2 completion after converting place/delete/duplicate actions to command execution.
 - (2026-02-07) Recorded Milestone 3 completion after introducing `commitTransform` and wiring transform edits to commit-time commands.
+- (2026-02-07) Recorded Milestone 4 completion after adding undo/redo shortcuts, toolbar buttons, and clearing history on load.

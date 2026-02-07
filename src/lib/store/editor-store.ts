@@ -367,7 +367,10 @@ export const useEditorStore = create<EditorStore>()(
         s.selectedAssetType = null;
         s.selectedObjectIds = [];
         s.activeObjectId = null;
+        s.isTransforming = false;
         s.dynamicObjectIds = {};
+        s.undoStack = [];
+        s.redoStack = [];
       });
     },
 

@@ -15,9 +15,13 @@ export function Toolbar() {
   const selectedAssetType = useEditorStore((s) => s.selectedAssetType);
   const selectedObjectIds = useEditorStore((s) => s.selectedObjectIds);
   const transformMode = useEditorStore((s) => s.transformMode);
+  const canUndo = useEditorStore((s) => s.undoStack.length > 0);
+  const canRedo = useEditorStore((s) => s.redoStack.length > 0);
   const setMode = useEditorStore((s) => s.setMode);
   const removeObjects = useEditorStore((s) => s.removeObjects);
   const setTransformMode = useEditorStore((s) => s.setTransformMode);
+  const undo = useEditorStore((s) => s.undo);
+  const redo = useEditorStore((s) => s.redo);
 
   const [saveOpen, setSaveOpen] = useState<boolean>(false);
   const [loadOpen, setLoadOpen] = useState<boolean>(false);
@@ -41,6 +45,17 @@ export function Toolbar() {
         e.preventDefault();
         removeObjects(selectedObjectIds);
       }
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'z' || e.key === 'Z')) {
+        e.preventDefault();
+        if (e.shiftKey) redo();
+        else undo();
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'y' || e.key === 'Y')) {
+        e.preventDefault();
+        redo();
+        return;
+      }
       if (e.key === 'w' || e.key === 'W') {
         e.preventDefault();
         setTransformMode('translate');
@@ -60,7 +75,7 @@ export function Toolbar() {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [removeObjects, selectedObjectIds, setMode, setTransformMode]);
+  }, [redo, removeObjects, selectedObjectIds, setMode, setTransformMode, undo]);
 
   return (
     <header className="absolute left-4 right-4 top-4 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/40 px-4 py-3 shadow-[0_24px_80px_rgba(0,0,0,0.55)] backdrop-blur">
@@ -90,6 +105,25 @@ export function Toolbar() {
           className="h-9 rounded-full border border-white/10 bg-white/5 px-4 text-sm text-zinc-100 transition enabled:hover:border-white/20 enabled:hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Save
+        </button>
+
+        <button
+          type="button"
+          onClick={undo}
+          disabled={!canUndo}
+          className="hidden h-9 rounded-full border border-white/10 bg-white/5 px-4 text-sm text-zinc-100 transition enabled:hover:border-white/20 enabled:hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 sm:inline-flex"
+          title="Undo (Cmd/Ctrl+Z)"
+        >
+          Undo
+        </button>
+        <button
+          type="button"
+          onClick={redo}
+          disabled={!canRedo}
+          className="hidden h-9 rounded-full border border-white/10 bg-white/5 px-4 text-sm text-zinc-100 transition enabled:hover:border-white/20 enabled:hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 sm:inline-flex"
+          title="Redo (Shift+Cmd/Ctrl+Z)"
+        >
+          Redo
         </button>
 
         <div className="hidden items-center rounded-full border border-white/10 bg-white/5 p-1 sm:flex">
