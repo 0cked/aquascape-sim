@@ -14,12 +14,13 @@ AquascapeSim currently supports placing assets and selecting a single object, bu
 - [x] (2026-02-07) Milestone 1: Upgrade the editor selection model (multi-select + active selection) and update the toolbar/scene to match.
 - [x] (2026-02-07) Milestone 2: Add a right-side properties panel that edits position/rotation/scale numerically and supports duplicate/delete.
 - [x] (2026-02-07) Milestone 3: Add transform mode state + UI (translate/rotate/scale) with keyboard shortcuts.
-- [ ] (2026-02-07) Milestone 4: Integrate `TransformControls` (gizmo) with Rapier bodies, snapping/clamping rules, and “don’t crash the scene” ergonomics.
+- [x] (2026-02-07) Milestone 4: Integrate `TransformControls` (gizmo) with Rapier bodies, snapping/clamping rules, and “don’t crash the scene” ergonomics.
 - [ ] (2026-02-07) Milestone 5: Validation, regression tests, and deploy polish.
 
 ## Surprises & Discoveries
 
-(To be updated as surprises occur.)
+- Observation: Drei `TransformControls` will not “reattach” to a `RefObject` when `ref.current` transitions from `null` to a real Object3D; you need to either attach to a stable Object3D instance or trigger a rerender after mount.
+  Evidence: The gizmo did not appear when using `object={someRef}` gated only on `.current` because ref changes do not rerender React.
 
 ## Decision Log
 
@@ -37,6 +38,12 @@ AquascapeSim currently supports placing assets and selecting a single object, bu
 - Decision: Use a “W/E/R” transform mode convention (Move/Rotate/Scale) in the toolbar and as global keyboard shortcuts when focus is not in a text field.
   Rationale: This matches established 3D editor muscle memory and keeps mode switching fast without adding complex UI.
   Date/Author: 2026-02-07 / Codex.
+- Decision: Drive `TransformControls` from a proxy `THREE.Group` instead of attaching the gizmo directly to a Rapier-driven Object3D.
+  Rationale: Rapier owns the rigid body group transform, and scaling the rigid body group does not correctly scale physics colliders. A proxy object lets the gizmo operate in a predictable way and we translate the proxy transform into store updates (which then drive visuals/colliders and kinematic bodies).
+  Date/Author: 2026-02-07 / Codex.
+- Decision: Track “dynamic while settling” objects in the store (`dynamicObjectIds`), freeze them to kinematic on sleep, and also freeze after manual gizmo transforms.
+  Rationale: This preserves the original “drop + collide” placement feel, but keeps the editor stable and store-driven once objects come to rest or are edited.
+  Date/Author: 2026-02-07 / Codex.
 
 ## Outcomes & Retrospective
 
@@ -45,6 +52,7 @@ AquascapeSim currently supports placing assets and selecting a single object, bu
 - (2026-02-07) Milestone 1 outcome: The editor supports multi-select (Shift-click) with an active selection, and the toolbar/scene highlight state reflect the selection model. Store tests updated and still passing.
 - (2026-02-07) Milestone 2 outcome: A right-side properties panel is available in `/editor`, showing the active selection’s transform values (position/rotation/scale) and enabling duplicate/delete actions for the current selection.
 - (2026-02-07) Milestone 3 outcome: The editor has a persistent transform mode state (`translate`/`rotate`/`scale`) controllable from the toolbar and via W/E/R hotkeys.
+- (2026-02-07) Milestone 4 outcome: A transform gizmo is available for the active selection in `/editor` (translate/rotate/scale), orbit controls disable while dragging, transforms are clamped inside the tank bounds, and transforms update Rapier kinematic bodies so numeric edits and gizmo drags move objects reliably.
 
 ---
 
@@ -133,22 +141,16 @@ Integrate Drei `TransformControls` into `src/components/three/scene.tsx`.
 
 Key implementation details:
 
-1. Keep a runtime map from `objectId -> { objectRef, rigidBody }`:
-   - Use `useRigidBodyContext()` inside `src/components/three/placed-asset.tsx` to get the underlying Object3D ref (`ref`) and `getRigidBody()` API.
-   - Register/unregister into a `useRef(new Map())` stored in `Scene`.
-2. Render exactly one `TransformControls` for the current `activeObjectId`:
-   - `object={objectRef}` (Drei supports `RefObject<Object3D>`).
-   - `mode={transformMode}`.
-   - `onMouseDown` sets `isTransforming=true`.
-   - `onMouseUp` sets `isTransforming=false`.
-   - `onObjectChange` reads the active object’s Object3D transform, clamps it, writes it back to the Object3D, and updates:
-     - the editor store (`updateObject(...)`)
-     - the Rapier body (use `setNextKinematicTranslation`/`setNextKinematicRotation` when kinematic).
-3. Body types:
-   - Newly placed objects should begin as dynamic so they can “drop” and resolve collisions.
-   - Once they go to sleep, freeze them to kinematic (so transforms are stable and editor-driven).
-   - While the gizmo is dragging, keep the active object kinematic.
-4. Clamping rules:
+1. Render exactly one `TransformControls` for the current `activeObjectId`, attached to a proxy `THREE.Group`:
+   - The proxy group is positioned/rotated/scaled to match the active object when not dragging.
+   - `TransformControls` manipulates the proxy group, and we translate the proxy transform into store updates.
+2. Rapier sync:
+   - In `src/components/three/placed-asset.tsx`, choose rigid body `type` based on store state:
+     - Dynamic while settling: `type="dynamic"` when `dynamicObjectIds[id]` is set.
+     - Stable editor transforms: `type="kinematicPosition"` otherwise.
+   - When a body sleeps (`onSleep`), write its final translation/rotation back into the store and freeze it to kinematic.
+   - For kinematic bodies, whenever store `position`/`rotation` change, set the Rapier body translation/rotation so visuals/colliders remain aligned.
+3. Clamping rules:
    - `x` and `z` must stay within tank inner bounds minus half-extents of the collider.
    - `y` must be at least substrate top + half-height.
    - Clamp `scale` to a sane range (e.g. 0.2–3.0 per axis) to avoid degeneracies.
@@ -210,3 +212,4 @@ Plan Revision Notes:
 - (2026-02-07) Recorded Milestone 1 completion and logged the selection semantics decisions, since subsequent milestones build on this selection model.
 - (2026-02-07) Recorded Milestone 2 completion after adding the properties panel UI and selection duplicate/delete behavior.
 - (2026-02-07) Recorded Milestone 3 completion after adding transform mode state, toolbar UI, and W/E/R keyboard shortcuts.
+- (2026-02-07) Recorded Milestone 4 completion after integrating `TransformControls` with clamping, adding dynamic-to-kinematic settling, and syncing kinematic bodies to store transforms.

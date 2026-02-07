@@ -14,12 +14,14 @@ export type EditorStore = {
   activeObjectId: string | null;
   transformMode: TransformMode;
   isTransforming: boolean;
+  dynamicObjectIds: Record<string, true>;
 
   reset: () => void;
   setMode: (mode: EditorMode) => void;
   selectAsset: (assetType: string) => void;
   setTransformMode: (mode: TransformMode) => void;
   setTransforming: (value: boolean) => void;
+  setObjectDynamic: (id: string, dynamic: boolean) => void;
 
   addObject: (object: PlacedObject) => void;
   removeObject: (id: string) => void;
@@ -41,6 +43,7 @@ export const useEditorStore = create<EditorStore>()(
     activeObjectId: null,
     transformMode: 'translate',
     isTransforming: false,
+    dynamicObjectIds: {},
 
     reset: () => {
       set((s) => {
@@ -51,6 +54,7 @@ export const useEditorStore = create<EditorStore>()(
         s.activeObjectId = null;
         s.transformMode = 'translate';
         s.isTransforming = false;
+        s.dynamicObjectIds = {};
       });
     },
 
@@ -86,6 +90,16 @@ export const useEditorStore = create<EditorStore>()(
       });
     },
 
+    setObjectDynamic: (id, dynamic) => {
+      set((s) => {
+        if (dynamic) {
+          s.dynamicObjectIds[id] = true;
+        } else {
+          delete s.dynamicObjectIds[id];
+        }
+      });
+    },
+
     addObject: (object) => {
       set((s) => {
         s.objects.push(object);
@@ -94,6 +108,7 @@ export const useEditorStore = create<EditorStore>()(
         s.mode = 'select';
         s.selectedAssetType = null;
         s.isTransforming = false;
+        s.dynamicObjectIds[object.id] = true;
       });
     },
 
@@ -104,6 +119,7 @@ export const useEditorStore = create<EditorStore>()(
         if (s.activeObjectId === id) {
           s.activeObjectId = s.selectedObjectIds.at(-1) ?? null;
         }
+        delete s.dynamicObjectIds[id];
       });
     },
 
@@ -116,6 +132,10 @@ export const useEditorStore = create<EditorStore>()(
         if (s.activeObjectId && toRemove.has(s.activeObjectId)) {
           s.activeObjectId = s.selectedObjectIds.at(-1) ?? null;
         }
+
+        ids.forEach((id) => {
+          delete s.dynamicObjectIds[id];
+        });
       });
     },
 
@@ -127,11 +147,13 @@ export const useEditorStore = create<EditorStore>()(
         for (const obj of s.objects) {
           if (!toDuplicate.has(obj.id)) continue;
 
+          const id = newId();
           copies.push({
             ...obj,
-            id: newId(),
+            id,
             position: [obj.position[0] + 0.25, obj.position[1], obj.position[2] + 0.25],
           });
+          s.dynamicObjectIds[id] = true;
         }
 
         if (copies.length === 0) return;
@@ -151,6 +173,7 @@ export const useEditorStore = create<EditorStore>()(
         s.selectedAssetType = null;
         s.selectedObjectIds = [];
         s.activeObjectId = null;
+        s.dynamicObjectIds = {};
       });
     },
 

@@ -1,10 +1,10 @@
 'use client';
 
-import { OrbitControls } from '@react-three/drei';
+import { OrbitControls, TransformControls } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import { Physics } from '@react-three/rapier';
-import { useMemo } from 'react';
-import { Color, NoToneMapping, PCFSoftShadowMap, SRGBColorSpace } from 'three';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { Color, Group, NoToneMapping, PCFSoftShadowMap, SRGBColorSpace } from 'three';
 
 import { AquariumTank } from '@/components/three/aquarium-tank';
 import { Effects } from '@/components/three/effects';
@@ -12,17 +12,122 @@ import { Lighting } from '@/components/three/lighting';
 import { PlacedAsset } from '@/components/three/placed-asset';
 import { PlacementHandler } from '@/components/three/placement-handler';
 import { Substrate } from '@/components/three/substrate';
+import { TANK, TANK_INNER } from '@/components/three/tank-constants';
 import { Water } from '@/components/three/water';
 import { getAssetDefinition } from '@/lib/assets/asset-catalog';
 import { useEditorStore } from '@/lib/store/editor-store';
+import type { PlaceableShape, Vec3 } from '@/types/scene';
+
+function clamp(v: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, v));
+}
+
+function halfExtents(shape: PlaceableShape, size: Vec3): Vec3 {
+  const [sx, sy, sz] = size;
+  switch (shape) {
+    case 'sphere': {
+      const r = sx / 2;
+      return [r, r, r];
+    }
+    case 'cylinder': {
+      const r = sx / 2;
+      return [r, sy / 2, r];
+    }
+    case 'box':
+    default:
+      return [sx / 2, sy / 2, sz / 2];
+  }
+}
 
 export function Scene() {
   const background = useMemo(() => new Color('#05070a'), []);
   const mode = useEditorStore((s) => s.mode);
   const objects = useEditorStore((s) => s.objects);
   const selectedObjectIds = useEditorStore((s) => s.selectedObjectIds);
+  const activeObjectId = useEditorStore((s) => s.activeObjectId);
   const selectObject = useEditorStore((s) => s.selectObject);
+  const transformMode = useEditorStore((s) => s.transformMode);
+  const isTransforming = useEditorStore((s) => s.isTransforming);
+  const setTransforming = useEditorStore((s) => s.setTransforming);
+  const updateObject = useEditorStore((s) => s.updateObject);
+  const setObjectDynamic = useEditorStore((s) => s.setObjectDynamic);
   const selectedSet = useMemo(() => new Set(selectedObjectIds), [selectedObjectIds]);
+
+  const activeObject = useMemo(() => {
+    if (!activeObjectId) return null;
+    return objects.find((o) => o.id === activeObjectId) ?? null;
+  }, [activeObjectId, objects]);
+
+  const activeAsset = useMemo(() => {
+    if (!activeObject) return undefined;
+    return getAssetDefinition(activeObject.assetType);
+  }, [activeObject]);
+
+  const [transformProxy, setTransformProxy] = useState<Group | null>(null);
+  const transformProxyRef = useCallback((node: Group | null) => {
+    setTransformProxy(node);
+  }, []);
+
+  useEffect(() => {
+    setTransforming(false);
+  }, [activeObjectId, setTransforming]);
+
+  useLayoutEffect(() => {
+    if (!transformProxy) return;
+    if (!activeObject) return;
+    if (isTransforming) return;
+
+    transformProxy.position.set(...activeObject.position);
+    transformProxy.rotation.set(...activeObject.rotation);
+    transformProxy.scale.set(...activeObject.scale);
+  }, [activeObject, isTransforming, transformProxy]);
+
+  const applyProxyTransform = useCallback(() => {
+    if (!transformProxy) return;
+    if (!activeObject) return;
+    if (!activeAsset) return;
+
+    const proxy = transformProxy;
+
+    const nextScale: Vec3 = [
+      clamp(proxy.scale.x, 0.2, 3.0),
+      clamp(proxy.scale.y, 0.2, 3.0),
+      clamp(proxy.scale.z, 0.2, 3.0),
+    ];
+
+    const size: Vec3 = [
+      activeAsset.defaultSize[0] * nextScale[0],
+      activeAsset.defaultSize[1] * nextScale[1],
+      activeAsset.defaultSize[2] * nextScale[2],
+    ];
+
+    const [hx, hy, hz] = halfExtents(activeAsset.shape, size);
+
+    const margin = 0.04;
+    const floorY = TANK.glass + 0.1;
+    const minY = floorY + hy + 0.02;
+    const maxY = TANK.height - margin - hy;
+
+    const minX = -TANK_INNER.width / 2 + margin + hx;
+    const maxX = TANK_INNER.width / 2 - margin - hx;
+    const minZ = -TANK_INNER.depth / 2 + margin + hz;
+    const maxZ = TANK_INNER.depth / 2 - margin - hz;
+
+    const nextPos: Vec3 = [
+      clamp(proxy.position.x, minX, maxX),
+      clamp(proxy.position.y, minY, maxY),
+      clamp(proxy.position.z, minZ, maxZ),
+    ];
+
+    proxy.position.set(...nextPos);
+    proxy.scale.set(...nextScale);
+
+    updateObject(activeObject.id, {
+      position: nextPos,
+      rotation: [proxy.rotation.x, proxy.rotation.y, proxy.rotation.z],
+      scale: nextScale,
+    });
+  }, [activeAsset, activeObject, transformProxy, updateObject]);
 
   return (
     <Canvas
@@ -64,6 +169,7 @@ export function Scene() {
           return (
             <PlacedAsset
               key={obj.id}
+              id={obj.id}
               asset={asset}
               position={obj.position}
               rotation={obj.rotation}
@@ -78,6 +184,26 @@ export function Scene() {
           );
         })}
       </Physics>
+
+      {mode === 'select' && activeObject && activeAsset && transformProxy ? (
+        <TransformControls
+          mode={transformMode}
+          object={transformProxy}
+          onMouseDown={() => setTransforming(true)}
+          onMouseUp={() => {
+            applyProxyTransform();
+            setObjectDynamic(activeObject.id, false);
+            setTransforming(false);
+          }}
+          onObjectChange={() => {
+            if (!isTransforming) return;
+            applyProxyTransform();
+          }}
+        />
+      ) : null}
+
+      {/* Proxy object that TransformControls manipulates; we translate it into store updates. */}
+      <group ref={transformProxyRef} />
       <Water />
 
       <Effects />

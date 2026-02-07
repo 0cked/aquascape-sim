@@ -1,13 +1,16 @@
+import type { RapierRigidBody } from '@react-three/rapier';
 import { BallCollider, CylinderCollider, CuboidCollider, RigidBody } from '@react-three/rapier';
 import type { ThreeEvent } from '@react-three/fiber';
-import { Suspense, useEffect, useMemo } from 'react';
-import { Mesh } from 'three';
+import { Suspense, useEffect, useMemo, useRef } from 'react';
+import { Euler, Mesh, Quaternion } from 'three';
 
 import { ThreeErrorBoundary } from '@/components/three/three-error-boundary';
 import { useAquascapeGLTF } from '@/lib/assets/use-aquascape-gltf';
+import { useEditorStore } from '@/lib/store/editor-store';
 import type { AssetDefinition, PlaceableShape, Vec3 } from '@/types/scene';
 
 type PlacedAssetProps = {
+  id: string;
   asset: AssetDefinition;
   position: Vec3;
   rotation: Vec3;
@@ -110,6 +113,7 @@ function AssetErrorFallback({ shape, size }: { shape: PlaceableShape; size: Vec3
 }
 
 export function PlacedAsset({
+  id,
   asset,
   position,
   rotation,
@@ -117,20 +121,61 @@ export function PlacedAsset({
   selected = false,
   onClick,
 }: PlacedAssetProps) {
+  const activeObjectId = useEditorStore((s) => s.activeObjectId);
+  const isTransforming = useEditorStore((s) => s.isTransforming);
+  const isDynamic = useEditorStore((s) => s.dynamicObjectIds[id] === true);
+  const updateObject = useEditorStore((s) => s.updateObject);
+  const setObjectDynamic = useEditorStore((s) => s.setObjectDynamic);
+
+  const isActive = id === activeObjectId;
+  const bodyType =
+    isDynamic && !(isActive && isTransforming) ? ('dynamic' as const) : ('kinematicPosition' as const);
+  const rigidBodyRef = useRef<RapierRigidBody>(null);
+
   const size: Vec3 = [
     asset.defaultSize[0] * scale[0],
     asset.defaultSize[1] * scale[1],
     asset.defaultSize[2] * scale[2],
   ];
 
+  useEffect(() => {
+    const rb = rigidBodyRef.current;
+    if (!rb) return;
+    if (bodyType !== 'kinematicPosition') return;
+
+    const q = new Quaternion().setFromEuler(new Euler(rotation[0], rotation[1], rotation[2], 'XYZ'));
+    rb.setTranslation({ x: position[0], y: position[1], z: position[2] }, false);
+    rb.setRotation({ x: q.x, y: q.y, z: q.z, w: q.w }, false);
+  }, [bodyType, position, rotation]);
+
   return (
     <RigidBody
-      type="dynamic"
+      ref={rigidBodyRef}
+      type={bodyType}
       position={position}
       rotation={rotation}
       colliders={false}
       linearDamping={0.75}
       angularDamping={0.8}
+      onSleep={() => {
+        const rb = rigidBodyRef.current;
+        if (!rb) return;
+
+        const t = rb.translation();
+        const r = rb.rotation();
+
+        const quat = new Quaternion(r.x, r.y, r.z, r.w);
+        const euler = new Euler().setFromQuaternion(quat, 'XYZ');
+
+        updateObject(id, {
+          position: [t.x, t.y, t.z],
+          rotation: [euler.x, euler.y, euler.z],
+        });
+
+        if (isDynamic) {
+          setObjectDynamic(id, false);
+        }
+      }}
     >
       <ShapeCollider shape={asset.shape} size={size} />
       <group onClick={onClick}>
